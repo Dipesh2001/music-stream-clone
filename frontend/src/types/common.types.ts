@@ -8,15 +8,23 @@ export interface BaseApiResponse<T> {
   // Potentially other common fields like errors array
 }
 
-// Pagination metadata
+// Pagination metadata (from what the backend returns)
 export interface Pagination {
   page: number;
   limit: number;
   totalPages: number;
-  totalResults: number;
+  total: number; // Renamed from totalResults
 }
 
-// Generic paginated response
-export interface PaginatedApiResponse<T> extends BaseApiResponse<T[]> {
-  pagination: Pagination;
+// Generic structure for paginated results from the backend before BaseApiResponse wraps it
+export interface PaginatedResult<T> {
+  artists?: T[]; // The actual array of items, could be 'docs' or specific like 'artists'
+  tracks?: T[]; // Example for other modules
+  albums?: T[]; // Example for other modules
+  users?: T[]; // Example for other modules
+  data?: T[]; // General fallback if the key is generic 'data' at the backend service level
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

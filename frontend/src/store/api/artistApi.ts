@@ -1,8 +1,10 @@
 import { baseApi } from './baseApi';
+import type { Artist, ArtistApiResponse, ArtistCreateRequest, ArtistUpdateRequest, ArtistStatus } from '../../types/artist.types';
+import type { BaseApiResponse, PaginatedResult } from '../../types/common.types';
 
 export const artistApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    createArtist: builder.mutation<any, any>({
+    createArtist: builder.mutation<ArtistApiResponse, ArtistCreateRequest>({
       query: (body) => ({
         url: '/artists',
         method: 'POST',
@@ -10,21 +12,21 @@ export const artistApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Artist'],
     }),
-    getArtists: builder.query<any, { page?: number; limit?: number; search?: string }>({
+    getArtists: builder.query<BaseApiResponse<PaginatedResult<Artist>>, { page?: number; limit?: number; search?: string; status?: ArtistStatus }>({
       query: (params) => ({
         url: '/artists',
         params,
       }),
       providesTags: (result) =>
-        result
-          ? [...result.docs.map(({ id }: { id: string }) => ({ type: 'Artist' as const, id })), 'Artist']
+        result && result.data && result.data.artists
+          ? [...result.data.artists.map(({ _id }) => ({ type: 'Artist' as const, id: _id })), 'Artist']
           : ['Artist'],
     }),
-    getArtistById: builder.query<any, string>({
+    getArtistById: builder.query<ArtistApiResponse, string>({
       query: (id) => `/artists/${id}`,
       providesTags: (result, error, id) => [{ type: 'Artist', id }],
     }),
-    updateArtist: builder.mutation<any, { id: string; body: any }>({
+    updateArtist: builder.mutation<ArtistApiResponse, { id: string; body: ArtistUpdateRequest }>({
       query: ({ id, body }) => ({
         url: `/artists/${id}`,
         method: 'PUT',
@@ -32,7 +34,7 @@ export const artistApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [{ type: 'Artist', id }],
     }),
-    deleteArtist: builder.mutation<any, string>({
+    deleteArtist: builder.mutation<ArtistApiResponse, string>({
       query: (id) => ({
         url: `/artists/${id}`,
         method: 'DELETE',
