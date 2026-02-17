@@ -1,0 +1,5 @@
+node_modules
+.env
+bun.lock
+music_streaming_api.postman_collection.json
+frontend-dummy
