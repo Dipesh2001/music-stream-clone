@@ -19,6 +19,8 @@ import PageMeta from "../../components/common/PageMeta";
 const artistFormSchema = z.object({
   name: z.string().min(1, "Artist name is required"),
   bio: z.string().optional(),
+  image: z.string().optional(),
+  genres: z.array(z.string()).optional(),
   status: z.nativeEnum(ArtistStatus).default(ArtistStatus.ACTIVE),
 });
 
@@ -40,33 +42,48 @@ const ArtistForm: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setValue, // Added setValue for genres handling
+    watch,    // Added watch for genres handling
     formState: { errors },
   } = useForm<ArtistFormData>({
     resolver: zodResolver(artistFormSchema),
     defaultValues: {
       name: "",
       bio: "",
+      image: "",
+      genres: [],
       status: ArtistStatus.ACTIVE,
     },
   });
+
+  const genresString = watch('genres') ? watch('genres').join(', ') : ''; // Watch genres as a string
 
   useEffect(() => {
     if (isEditMode && artistData?.data) {
       reset({
         name: artistData.data.name,
         bio: artistData.data.bio,
+        image: artistData.data.image,
+        genres: artistData.data.genres || [],
         status: artistData.data.status,
       });
     }
   }, [isEditMode, artistData, reset]);
 
   const onSubmit = async (data: ArtistFormData) => {
+    // Convert comma-separated genres string to array before submission
+    const submittedData = {
+      ...data,
+      genres: data.genres && typeof data.genres === 'string'
+        ? (data.genres as string).split(',').map(g => g.trim()).filter(g => g)
+        : data.genres,
+    };
     try {
       if (isEditMode && id) {
-        await updateArtist({ id, body: data as ArtistUpdateRequest }).unwrap();
+        await updateArtist({ id, body: submittedData as ArtistUpdateRequest }).unwrap();
         toast.success("Artist updated successfully!");
       } else {
-        await createArtist(data as ArtistCreateRequest).unwrap();
+        await createArtist(submittedData as ArtistCreateRequest).unwrap();
         toast.success("Artist created successfully!");
       }
       navigate("/artists");
@@ -118,6 +135,34 @@ const ArtistForm: React.FC = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             ></textarea>
             {errors.bio && <p className="mt-2 text-sm text-red-600">{errors.bio.message}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="image" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Image URL (Optional)
+            </label>
+            <input
+              type="text"
+              id="image"
+              {...register("image")}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+            {errors.image && <p className="mt-2 text-sm text-red-600">{errors.image.message}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="genres" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Genres (comma-separated, Optional)
+            </label>
+            <input
+              type="text"
+              id="genres"
+              value={genresString}
+              onChange={(e) => setValue('genres', e.target.value.split(',').map(g => g.trim()).filter(g => g), { shouldValidate: true })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="e.g., Pop, Rock, Electronic"
+            />
+            {errors.genres && <p className="mt-2 text-sm text-red-600">{errors.genres.message}</p>}
           </div>
 
           <div>

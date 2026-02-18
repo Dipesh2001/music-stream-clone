@@ -44,6 +44,7 @@ export interface RefreshTokenRequest {
 
 export interface RefreshTokenResponseData {
   accessToken: string;
+  refreshToken: string; // New refreshToken
   expiresIn: number;
 }
 

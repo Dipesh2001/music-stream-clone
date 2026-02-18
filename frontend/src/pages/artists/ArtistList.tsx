@@ -1,8 +1,6 @@
-// frontend/src/pages/artists/ArtistList.tsx
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useGetArtistsQuery, useDeleteArtistMutation } from "../../store/api/artistApi";
+import { useGetArtistsQuery, useDeleteArtistMutation } from "../../store/api/artistApi"; // Removed useGetUniqueGenresQuery
 import type { Artist } from "../../types/artist.types";
 import {  ArtistStatus } from "../../types/artist.types";
 import type { ColumnDefinition, TableAction } from "../../components/table/Table.types";
@@ -21,14 +19,18 @@ const ArtistList: React.FC = () => {
   const [status, setStatus] = useState<ArtistStatus | "all">(
     (searchParams.get("status") as ArtistStatus) || "all"
   );
+  // Removed selectedGenres state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [artistToDelete, setArtistToDelete] = useState<Artist | null>(null);
+
+  // Removed useGetUniqueGenresQuery call
 
   const { data, isLoading, isFetching, error } = useGetArtistsQuery({
     page,
     limit,
     search,
     status: status === "all" ? undefined : status,
+    // Removed genres parameter
   });
 
   const [deleteArtist, { isLoading: isDeleting }] = useDeleteArtistMutation();
@@ -39,8 +41,9 @@ const ArtistList: React.FC = () => {
     if (limit !== 10) params.limit = String(limit);
     if (search) params.search = search;
     if (status !== "all") params.status = status;
+    // Removed genres from search params
     setSearchParams(params, { replace: true });
-  }, [page, limit, search, status, setSearchParams]);
+  }, [page, limit, search, status, setSearchParams]); // Removed selectedGenres from dependencies
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -60,6 +63,8 @@ const ArtistList: React.FC = () => {
     setStatus(e.target.value as ArtistStatus | "all");
     setPage(1); // Reset to first page when status changes
   };
+
+  // Removed handleGenreSelectChange function
 
   const handleDeleteClick = (artist: Artist) => {
     setArtistToDelete(artist);
@@ -83,7 +88,8 @@ const ArtistList: React.FC = () => {
   const columns: ColumnDefinition<Artist>[] = useMemo(
     () => [
       { header: "ID", accessor: "_id", className: "w-1/6" },
-      { header: "Name", accessor: "name", className: "w-2/6" },
+      { header: "Name", accessor: "name", className: "w-1/6" },
+      { header: "Genres", accessor: (artist) => artist.genres?.join(', ') || 'N/A', className: "w-1/6" },
       { header: "Status", accessor: "status", className: "w-1/6" },
       {
         header: "Created At",
@@ -118,11 +124,12 @@ const ArtistList: React.FC = () => {
       <div className="mb-4 flex space-x-4">
         <input
           type="text"
-          placeholder="Search by name..."
+          placeholder="Search by name or genre..."
           value={search}
           onChange={handleSearchChange}
           className="flex-grow p-2 border border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
         />
+        {/* Removed genre multi-select */}
         <select
           value={status}
           onChange={handleStatusChange}
