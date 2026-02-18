@@ -29,10 +29,8 @@ const createTrack = async (trackData) => {
 
 const getAllTracks = async ({ page = 1, limit = 10, search = '', albumId, artistId, includeInactive = false }) => {
   const skip = (page - 1) * limit;
-  const query = {};
-
   if (!includeInactive) {
-    query.isActive = true;
+    query.status = 'active';
   }
 
   if (search) {
@@ -82,9 +80,8 @@ const getTrackById = async (id, includeInactive = false) => {
     throw new Error('Invalid Track ID format');
   }
 
-  const query = { _id: id };
   if (!includeInactive) {
-    query.isActive = true;
+    query.status = 'active';
   }
 
   const track = await Track.findOne(query)
@@ -149,7 +146,7 @@ const deleteTrack = async (id) => {
     throw new Error('Track not found');
   }
 
-  track.isActive = false; // Soft delete
+  track.status = 'inactive'; // Soft delete
   await track.save();
   return { message: 'Track soft-deleted successfully' };
 };
@@ -159,15 +156,16 @@ const incrementPlayCount = async (id) => {
     throw new Error('Invalid Track ID format');
   }
 
-  const track = await Track.findByIdAndUpdate(
-    id,
-    { $inc: { playCount: 1 } },
-    { new: true } // Return the updated document
-  ).lean();
-
+  const track = await Track.findById(id);
   if (!track) {
     throw new Error('Track not found');
   }
+  if (track.status !== 'active') {
+    throw new Error('Cannot increment play count for an inactive track');
+  }
+
+  track.playCount = (track.playCount || 0) + 1;
+  await track.save();
   return track;
 };
 

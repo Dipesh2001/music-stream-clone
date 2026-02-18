@@ -10,13 +10,18 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
 const myPlaylists = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const playlists = await playlistService.getMyPlaylists(userId);
+  const { page, limit, search } = req.query;
+  const playlists = await playlistService.getMyPlaylists(userId, {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+    search,
+  });
   successResponse(res, playlists, 'My playlists fetched successfully');
 });
 
 const publicPlaylists = asyncHandler(async (req, res) => {
-  const { page, limit } = req.query;
-  const { playlists, totalPlaylists, totalPages } = await playlistService.getPublicPlaylists({ page, limit });
+  const { page, limit, search } = req.query;
+  const { playlists, totalPlaylists, totalPages } = await playlistService.getPublicPlaylists({ page, limit, search });
   successResponse(res, { playlists, totalPlaylists, totalPages }, 'Public playlists fetched successfully');
 });
 

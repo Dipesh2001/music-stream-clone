@@ -18,7 +18,7 @@ const updateArtistSchema = z.object({
     bio: z.string().optional(),
     image: z.string().url('Image must be a valid URL').optional(),
     genres: z.array(z.string()).optional(),
-    isActive: z.boolean().optional(), // Allow admin to change isActive
+    status: z.enum(['active', 'inactive']).optional(),
   }).partial(), // All fields are optional for update
 });
 

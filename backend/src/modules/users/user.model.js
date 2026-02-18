@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  refreshToken: {
+    type: String,
+    select: false // Do not return refreshToken by default
   }
 }, {
   timestamps: true // Adds createdAt and updatedAt timestamps
@@ -51,6 +55,14 @@ userSchema.pre('save', function() {
 // Method to compare candidate password with hashed password
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Method to compare candidate refresh token with hashed refresh token
+userSchema.methods.compareRefreshToken = async function(candidateRefreshToken) {
+  if (!this.refreshToken) {
+    return false;
+  }
+  return await bcrypt.compare(candidateRefreshToken, this.refreshToken);
 };
 
 const User = mongoose.model('User', userSchema);

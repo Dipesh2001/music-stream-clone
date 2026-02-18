@@ -8,7 +8,7 @@ const checkExistenceAndActiveStatus = async (model, id) => {
     throw new Error(`Invalid ID format for ${model.modelName}`);
   }
   const item = await model.findById(id);
-  if (!item || !item.isActive) {
+  if (!item || item.status !== 'active') {
     throw new Error(`${model.modelName} not found or is inactive`);
   }
   return item;
@@ -62,35 +62,118 @@ const unlikeAlbum = async (userId, albumId) => {
   return { message: 'Album removed from favorites' };
 };
 
-const getMyFavorites = async (userId) => {
-  const favorites = await Favorite.find({ user: userId })
-    .populate({
-      path: 'track',
-      select: 'title duration audioUrl artist',
-      populate: {
-        path: 'artist',
-        select: 'name -_id',
-      },
-    })
-    .populate({
-      path: 'album',
-      select: 'title coverImage artist',
-      populate: {
-        path: 'artist',
-        select: 'name -_id',
-      },
-    })
-    .lean();
+const getMyFavorites = async (userId, { page = 1, limit = 10, search = '' }) => {
+  const skip = (page - 1) * limit;
 
-  return favorites.map(fav => {
-    if (fav.track) {
-      return { type: 'track', item: fav.track };
-    }
-    if (fav.album) {
-      return { type: 'album', item: fav.album };
-    }
-    return fav; // Should not happen with validation
-  });
+  const pipeline = [
+    { $match: { user: userId } },
+    {
+      $lookup: {
+        from: 'tracks',
+        localField: 'track',
+        foreignField: '_id',
+        as: 'trackDetails',
+      },
+    },
+    {
+      $lookup: {
+        from: 'albums',
+        localField: 'album',
+        foreignField: '_id',
+        as: 'albumDetails',
+      },
+    },
+    {
+      $unwind: { path: '$trackDetails', preserveNullAndEmptyArrays: true },
+    },
+    {
+      $unwind: { path: '$albumDetails', preserveNullAndEmptyArrays: true },
+    },
+    // Populate artist for trackDetails
+    {
+      $lookup: {
+        from: 'artists',
+        localField: 'trackDetails.artist',
+        foreignField: '_id',
+        as: 'trackDetails.artist',
+        pipeline: [
+          { $project: { name: 1, image: 1 } }
+        ]
+      }
+    },
+    {
+      $unwind: { path: '$trackDetails.artist', preserveNullAndEmptyArrays: true },
+    },
+    // Populate artist for albumDetails
+    {
+      $lookup: {
+        from: 'artists',
+        localField: 'albumDetails.artist',
+        foreignField: '_id',
+        as: 'albumDetails.artist',
+        pipeline: [
+          { $project: { name: 1, image: 1 } }
+        ]
+      }
+    },
+    {
+      $unwind: { path: '$albumDetails.artist', preserveNullAndEmptyArrays: true },
+    },
+  ];
+
+  if (search) {
+    pipeline.push({
+      $match: {
+        $or: [
+          { 'trackDetails.title': { $regex: search, $options: 'i' } },
+          { 'trackDetails.artist.name': { $regex: search, $options: 'i' } },
+          { 'albumDetails.title': { $regex: search, $options: 'i' } },
+          { 'albumDetails.artist.name': { $regex: search, $options: 'i' } },
+        ],
+      },
+    });
+  }
+
+  const [favoritesWithCount] = await Favorite.aggregate([
+    ...pipeline,
+    {
+      $facet: {
+        totalData: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              _id: 1,
+              user: 1,
+              track: 1,
+              album: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              item: {
+                $cond: {
+                  if: '$trackDetails._id',
+                  then: { type: 'track', data: '$trackDetails' },
+                  else: { type: 'album', data: '$albumDetails' },
+                },
+              },
+            },
+          },
+        ],
+        totalCount: [{ $count: 'count' }],
+      },
+    },
+  ]);
+
+  const favorites = favoritesWithCount.totalData.map(fav => fav.item);
+  const total = favoritesWithCount.totalCount[0]?.count || 0;
+
+  return {
+    favorites,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 module.exports = {

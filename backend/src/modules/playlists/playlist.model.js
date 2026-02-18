@@ -25,9 +25,10 @@ const playlistSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  isActive: {
-    type: Boolean,
-    default: true,
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active',
   },
 }, {
   timestamps: true,

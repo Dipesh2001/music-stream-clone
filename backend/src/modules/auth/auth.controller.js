@@ -1,7 +1,9 @@
-const { registerUser, loginUser } = require('./auth.service');
+const { registerUser, loginUser, logoutUser } = require('./auth.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const { successResponse } = require('../../utils/response');
-const { verifyRefreshToken, generateAccessToken } = require('../../utils/jwt');
+const { verifyRefreshToken, generateAccessToken, generateRefreshToken } = require('../../utils/jwt');
+const User = require('../users/user.model');
+const bcrypt = require('bcryptjs');
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -32,14 +34,42 @@ const refreshToken = asyncHandler(async (req, res) => {
   // Verify refresh token
   const decoded = verifyRefreshToken(oldRefreshToken);
 
-  // If decoded, issue new access token (assuming user details are in decoded)
-  const newAccessToken = generateAccessToken({ id: decoded.id, role: decoded.role });
+  const user = await User.findById(decoded.id).select('+refreshToken');
+  if (!user || !user.refreshToken) {
+    throw new Error('Invalid refresh token or user not found');
+  }
 
-  successResponse(res, { accessToken: newAccessToken }, 'New access token generated');
+  const isMatch = await user.compareRefreshToken(oldRefreshToken);
+  if (!isMatch) {
+    throw new Error('Invalid refresh token');
+  }
+
+  // Generate new tokens
+  const newAccessToken = generateAccessToken({ id: user._id, role: user.role });
+  const newRefreshToken = generateRefreshToken({ id: user._id, role: user.role });
+
+  // Hash and save new refresh token
+  const hashedNewRefreshToken = await bcrypt.hash(newRefreshToken, 10);
+  user.refreshToken = hashedNewRefreshToken;
+  await user.save();
+
+  successResponse(res, { accessToken: newAccessToken, refreshToken: newRefreshToken }, 'New token pair generated');
+});
+
+// @desc    Log user out / clear refresh token
+// @route   POST /api/auth/logout
+// @access  Private
+const logout = asyncHandler(async (req, res) => {
+  const userId = req.user.id; // Assuming user ID is available from auth middleware
+  await logoutUser(userId);
+  // If refresh token is in HTTP-only cookie, clear it here:
+  // res.clearCookie('refreshToken', { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+  successResponse(res, null, 'Logged out successfully');
 });
 
 module.exports = {
   register,
   login,
   refreshToken,
+  logout,
 };

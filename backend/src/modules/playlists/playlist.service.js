@@ -20,34 +20,61 @@ const createPlaylist = async (userId, playlistData) => {
   return playlist;
 };
 
-const getMyPlaylists = async (userId) => {
-  const playlists = await Playlist.find({ owner: userId, isActive: true })
-    .populate({
-      path: 'tracks',
-      select: 'title duration artist isActive',
-      populate: {
-        path: 'artist',
-        select: 'name -_id'
-      }
-    });
-  return playlists;
-};
-
-const getPublicPlaylists = async ({ page = 1, limit = 10 }) => {
+const getMyPlaylists = async (userId, { page = 1, limit = 10, search = '' }) => {
   const skip = (page - 1) * limit;
-  const playlists = await Playlist.find({ isPublic: true, isActive: true })
+  const query = { owner: userId, status: 'active' };
+
+  if (search) {
+    query.name = { $regex: search, $options: 'i' };
+  }
+  const playlists = await Playlist.find(query)
     .populate({
       path: 'tracks',
-      select: 'title duration artist isActive',
+      select: 'title duration artist status',
+      match: { status: 'active' }, // Only populate active tracks
       populate: {
         path: 'artist',
         select: 'name -_id'
       }
     })
+    .sort({ createdAt: -1 })
     .skip(skip)
-    .limit(parseInt(limit));
+    .limit(limit);
 
-  const totalPlaylists = await Playlist.countDocuments({ isPublic: true, isActive: true });
+  const total = await Playlist.countDocuments(query);
+
+  return {
+    playlists,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
+const getPublicPlaylists = async ({ page = 1, limit = 10, search = '' }) => {
+  const skip = (page - 1) * limit;
+  const query = { isPublic: true, status: 'active' };
+
+  if (search) {
+    query.name = { $regex: search, $options: 'i' };
+  }
+
+  const playlists = await Playlist.find(query)
+    .populate({
+      path: 'tracks',
+      select: 'title duration artist status',
+      match: { status: 'active' }, // Only populate active tracks
+      populate: {
+        path: 'artist',
+        select: 'name -_id'
+      }
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalPlaylists = await Playlist.countDocuments(query);
 
   return {
     playlists,
@@ -70,14 +97,15 @@ const getPlaylistById = async (id, userId) => {
     })
     .populate({
       path: 'tracks',
-      select: 'title duration artist isActive',
+      select: 'title duration artist status',
+      match: { status: 'active' }, // Only populate active tracks
       populate: {
         path: 'artist',
         select: 'name -_id'
       }
     });
 
-  if (!playlist || !playlist.isActive) {
+  if (!playlist || playlist.status !== 'active') {
     throw new Error('Playlist not found');
   }
 
@@ -94,7 +122,7 @@ const addTrackToPlaylist = async (playlistId, trackId, userId) => {
 
   // Validate Track existence and ensure it's active
   const track = await Track.findById(trackId);
-  if (!track || !track.isActive) {
+  if (!track || track.status !== 'active') {
     throw new Error('Track not found or is inactive');
   }
 
@@ -126,7 +154,7 @@ const removeTrackFromPlaylist = async (playlistId, trackId, userId) => {
 const deletePlaylist = async (playlistId, userId) => {
   const playlist = await checkPlaylistOwnership(playlistId, userId);
 
-  playlist.isActive = false; // Soft delete
+  playlist.status = 'inactive'; // Soft delete
   await playlist.save();
   return { message: 'Playlist soft-deleted successfully' };
 };

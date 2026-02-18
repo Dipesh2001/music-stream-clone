@@ -8,12 +8,13 @@ const createAlbum = asyncHandler(async (req, res) => {
 });
 
 const listAlbums = asyncHandler(async (req, res) => {
-  const { page, limit, search, artistId } = req.query;
+  const { page, limit, search, artistId, status } = req.query;
   const albums = await albumService.getAllAlbums({
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
     search,
     artistId,
+    status, // Pass the status parameter to the service
   });
   return successResponse(res, albums, 'Albums retrieved successfully', 200);
 });
@@ -22,7 +23,7 @@ const getAlbum = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const album = await albumService.getAlbumById(id);
 
-  if (!album || !album.isActive) { // Check isActive for public access
+  if (!album || album.status !== 'active') { // Check status for public access
     return successResponse(res, null, 'Album not found', 404);
   }
   return successResponse(res, album, 'Album retrieved successfully', 200);

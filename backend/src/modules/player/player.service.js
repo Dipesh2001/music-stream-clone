@@ -10,7 +10,7 @@ const logPlay = async (userId, trackId) => {
   }
 
   const track = await Track.findById(trackId);
-  if (!track || !track.isActive) {
+  if (!track || track.status !== 'active') {
     throw new Error('Track not found or is inactive');
   }
 
@@ -55,7 +55,7 @@ const updateProgress = async (userId, trackId, lastPosition, completed) => {
   }
 
   const track = await Track.findById(trackId);
-  if (!track || !track.isActive) {
+  if (!track || track.status !== 'active') {
     throw new Error('Track not found or is inactive');
   }
 
@@ -78,10 +78,15 @@ const updateProgress = async (userId, trackId, lastPosition, completed) => {
   return mostRecentPlay;
 };
 
-const getRecentlyPlayed = async (userId, limit = 10) => {
-  const recentlyPlayed = await PlayHistory.find({ user: userId })
+const getRecentlyPlayed = async (userId, { page = 1, limit = 10 }) => {
+  const skip = (page - 1) * limit;
+
+  const query = { user: userId };
+
+  const recentPlays = await PlayHistory.find(query)
     .sort({ playedAt: -1 }) // Sort by most recent
-    .limit(parseInt(limit))
+    .skip(skip)
+    .limit(limit)
     .populate({
       path: 'track',
       select: 'title duration audioUrl artist',
@@ -92,7 +97,15 @@ const getRecentlyPlayed = async (userId, limit = 10) => {
     })
     .lean();
 
-  return recentlyPlayed;
+  const total = await PlayHistory.countDocuments(query);
+
+  return {
+    recentPlays,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 module.exports = {

@@ -40,9 +40,10 @@ const trackSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'Play count cannot be negative'],
   },
-  isActive: {
-    type: Boolean,
-    default: true,
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active',
   },
 }, {
   timestamps: true,

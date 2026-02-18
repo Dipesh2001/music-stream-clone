@@ -19,8 +19,11 @@ const updateProgress = asyncHandler(async (req, res) => {
 
 const recentlyPlayed = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { limit } = req.query;
-  const recentPlays = await playerService.getRecentlyPlayed(userId, limit);
+  const { page, limit } = req.query;
+  const recentPlays = await playerService.getRecentlyPlayed(userId, {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+  });
   successResponse(res, recentPlays, 'Recently played tracks fetched successfully');
 });
 

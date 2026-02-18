@@ -32,7 +32,12 @@ const unlikeAlbum = asyncHandler(async (req, res) => {
 
 const myFavorites = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const favorites = await favoriteService.getMyFavorites(userId);
+  const { page, limit, search } = req.query;
+  const favorites = await favoriteService.getMyFavorites(userId, {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+    search,
+  });
   successResponse(res, favorites, 'My favorites fetched successfully');
 });
 

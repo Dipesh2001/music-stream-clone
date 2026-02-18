@@ -6,12 +6,19 @@ const createArtist = async (artistData) => {
   return artist;
 };
 
-const getAllArtists = async ({ page = 1, limit = 10, search = '' }) => {
+const getAllArtists = async ({ page = 1, limit = 10, search = '', status = 'all' }) => {
   const skip = (page - 1) * limit;
-  const query = { isActive: true }; // Only return active artists for public API
+  const query = {};
 
   if (search) {
-    query.name = { $regex: search, $options: 'i' }; // Case-insensitive search
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { genres: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  if (status !== 'all') {
+    query.status = status;
   }
 
   const artists = await Artist.find(query)
@@ -41,7 +48,7 @@ const updateArtist = async (id, updateData) => {
 };
 
 const deleteArtist = async (id) => {
-  const artist = await Artist.findByIdAndUpdate(id, { isActive: false }, { new: true }); // Soft delete
+  const artist = await Artist.findByIdAndUpdate(id, { status: 'inactive' }, { new: true }); // Soft delete
   return artist;
 };
 

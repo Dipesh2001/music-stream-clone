@@ -13,15 +13,18 @@ const createAlbum = async (albumData) => {
   return album;
 };
 
-const getAllAlbums = async ({ page = 1, limit = 10, search = '', artistId = '' }) => {
+const getAllAlbums = async ({ page = 1, limit = 10, search = '', artistId = '', status = 'all' }) => {
   const skip = (page - 1) * limit;
-  const query = { isActive: true }; // Only return active albums for public API
+  const query = {};
 
   if (search) {
     query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
   }
   if (artistId) {
     query.artist = artistId; // Filter by artistId
+  }
+  if (status !== 'all') {
+    query.status = status;
   }
 
   const albums = await Album.find(query)
@@ -60,7 +63,7 @@ const updateAlbum = async (id, updateData) => {
 };
 
 const deleteAlbum = async (id) => {
-  const album = await Album.findByIdAndUpdate(id, { isActive: false }, { new: true }); // Soft delete
+  const album = await Album.findByIdAndUpdate(id, { status: 'inactive' }, { new: true }); // Soft delete
   return album;
 };
 

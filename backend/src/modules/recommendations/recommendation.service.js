@@ -5,17 +5,19 @@ const Artist = require('../artists/artist.model');
 const Album = require('../albums/album.model');
 const mongoose = require('mongoose');
 
-const getRecommendations = async (userId, limit = 10) => {
+const getRecommendations = async (userId, { page = 1, limit = 10 }) => {
+  const skip = (page - 1) * limit;
+
   // 1. Get user's liked tracks and albums
   const likedFavorites = await Favorite.find({ user: userId })
     .populate('track')
     .populate('album');
 
   const likedTrackIds = likedFavorites
-    .filter(fav => fav.track && fav.track.isActive)
+    .filter(fav => fav.track && fav.track.status === 'active')
     .map(fav => fav.track._id);
   const likedAlbumIds = likedFavorites
-    .filter(fav => fav.album && fav.album.isActive)
+    .filter(fav => fav.album && fav.album.status === 'active')
     .map(fav => fav.album._id);
 
   // 2. Get user's recently played tracks
@@ -25,7 +27,7 @@ const getRecommendations = async (userId, limit = 10) => {
     .populate('track');
 
   const recentlyPlayedTrackIds = recentlyPlayed
-    .filter(ph => ph.track && ph.track.isActive)
+    .filter(ph => ph.track && ph.track.status === 'active')
     .map(ph => ph.track._id);
 
   // Combine all relevant track IDs for exclusion
@@ -58,7 +60,7 @@ const getRecommendations = async (userId, limit = 10) => {
     const artistTracks = await Track.find({
       artist: { $in: Array.from(relevantArtistIds) },
       _id: { $nin: excludedTrackIds },
-      isActive: true,
+      status: 'active',
     })
     .limit(limit)
     .populate('artist', 'name')
@@ -77,10 +79,10 @@ const getRecommendations = async (userId, limit = 10) => {
     const genreTracks = await Track.find({
       $or: [
         { language: { $in: Array.from(relevantGenres) } },
-        { album: { $in: likedAlbumIds } } // Tracks from liked albums by genre is covered by album
+        // { album: { $in: likedAlbumIds } } // Tracks from liked albums by genre is covered by album
       ],
       _id: { $nin: Array.from(recommendedTrackIds) }, // Exclude already recommended
-      isActive: true,
+      status: 'active',
     })
     .limit(limit - recommendations.length)
     .populate('artist', 'name')
@@ -99,7 +101,7 @@ const getRecommendations = async (userId, limit = 10) => {
   if (recommendations.length < limit) {
     const fallbackTracks = await Track.find({
       _id: { $nin: Array.from(recommendedTrackIds) },
-      isActive: true,
+      status: 'active',
     })
     .sort({ playCount: -1 }) // Sort by playCount for popularity
     .limit(limit - recommendations.length)
@@ -114,7 +116,18 @@ const getRecommendations = async (userId, limit = 10) => {
     });
   }
 
-  return recommendations;
+  // Apply pagination at the end
+  const paginatedRecommendations = recommendations.slice(skip, skip + limit);
+
+  const total = recommendations.length;
+
+  return {
+    recommendations: paginatedRecommendations,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 };
 
 module.exports = {

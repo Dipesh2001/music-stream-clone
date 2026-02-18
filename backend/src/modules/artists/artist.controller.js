@@ -8,11 +8,12 @@ const createArtist = asyncHandler(async (req, res) => {
 });
 
 const listArtists = asyncHandler(async (req, res) => {
-  const { page, limit, search } = req.query;
+  const { page, limit, search, status } = req.query;
   const artists = await artistService.getAllArtists({
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
     search,
+    status,
   });
   return successResponse(res, artists, 'Artists retrieved successfully', 200);
 });
@@ -21,7 +22,7 @@ const getArtist = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const artist = await artistService.getArtistById(id);
 
-  if (!artist || !artist.isActive) { // Check isActive for public access
+  if (!artist || artist.status !== 'active') { // Check status for public access
     return successResponse(res, null, 'Artist not found', 404);
   }
   return successResponse(res, artist, 'Artist retrieved successfully', 200);
