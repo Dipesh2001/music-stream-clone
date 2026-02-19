@@ -3,6 +3,9 @@ const { successResponse } = require('../../utils/response');
 const albumService = require('./album.service');
 
 const createAlbum = asyncHandler(async (req, res) => {
+  if (req.file) {
+    req.body.coverImage = `/uploads/albums/${req.file.filename}`; // Save the relative path/URL
+  }
   const album = await albumService.createAlbum(req.body);
   return successResponse(res, album, 'Album created successfully', 201);
 });
@@ -31,6 +34,9 @@ const getAlbum = asyncHandler(async (req, res) => {
 
 const updateAlbum = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  if (req.file) {
+    req.body.coverImage = `/uploads/albums/${req.file.filename}`;
+  }
   const album = await albumService.updateAlbum(id, req.body);
 
   if (!album) {

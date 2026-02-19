@@ -7,3 +7,4 @@ export { default as GridIcon } from './grid.svg?react';
 export { default as HorizontalDots } from './horizontal-dots.svg?react';
 export { default as ListIcon } from './list.svg?react';
 export { default as UserCircleIcon } from './user-circle.svg?react';
+export { default as CalendarIcon } from './calendar.svg?react';

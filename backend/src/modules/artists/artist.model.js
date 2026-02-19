@@ -20,6 +20,9 @@ const artistSchema = new mongoose.Schema({
     type: String,
     trim: true,
   }],
+  debutDate: {
+    type: Date,
+  },
   status: {
     type: String,
     enum: ['active', 'inactive'],

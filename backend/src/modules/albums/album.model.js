@@ -8,11 +8,10 @@ const albumSchema = new mongoose.Schema({
     trim: true,
     index: true,
   },
-  artist: {
+  artists: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Artist',
-    required: [true, 'Artist is required'],
-  },
+  }],
   coverImage: {
     type: String,
     trim: true,
@@ -20,10 +19,10 @@ const albumSchema = new mongoose.Schema({
   releaseDate: {
     type: Date,
   },
-  genres: [{
+  genre: {
     type: String,
     trim: true,
-  }],
+  },
   status: {
     type: String,
     enum: ['active', 'inactive'],

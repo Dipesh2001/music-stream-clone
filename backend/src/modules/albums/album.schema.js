@@ -4,10 +4,11 @@ const mongoose = require('mongoose');
 const createAlbumSchema = z.object({
   body: z.object({
     title: z.string().min(1, 'Title is required'),
-    artist: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), 'Invalid Artist ID'),
-    coverImage: z.string().url('Cover image must be a valid URL').optional(),
-    releaseDate: z.string().datetime('Release date must be a valid date string').optional(),
-    genres: z.array(z.string()).optional(),
+    artists: z.array(z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), 'Invalid Artist ID')).min(1, 'At least one artist is required'),
+    coverImage: z.string().optional(),
+    releaseDate: z.string().optional(),
+    genre: z.string().optional(),
+    status: z.enum(['active', 'inactive']).optional(),
   }),
 });
 
@@ -17,11 +18,11 @@ const updateAlbumSchema = z.object({
   }),
   body: z.object({
     title: z.string().min(1, 'Title cannot be empty').optional(),
-    artist: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), 'Invalid Artist ID').optional(),
-    coverImage: z.string().url('Cover image must be a valid URL').optional(),
-    releaseDate: z.string().datetime('Release date must be a valid date string').optional(),
-    genres: z.array(z.string()).optional(),
-    isActive: z.boolean().optional(), // Allow admin to change isActive
+    artists: z.array(z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), 'Invalid Artist ID')).optional(),
+    coverImage: z.string().optional(),
+    releaseDate: z.string().optional(),
+    genre: z.string().optional(),
+    status: z.enum(['active', 'inactive']).optional(),
   }).partial(), // All fields are optional for update
 });
 

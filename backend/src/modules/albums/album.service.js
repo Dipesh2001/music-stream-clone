@@ -2,10 +2,18 @@ const Album = require('./album.model');
 const Artist = require('../artists/artist.model'); // Required for validation
 
 const createAlbum = async (albumData) => {
-  // Validate artist existence
-  const artistExists = await Artist.findById(albumData.artist);
-  if (!artistExists) {
-    throw new Error('Artist not found');
+  if (!albumData) {
+    throw new Error('Album data is required');
+  }
+
+  // Validate artists existence
+  if (albumData.artists && Array.isArray(albumData.artists)) {
+    const artistChecks = await Promise.all(
+      albumData.artists.map(id => Artist.findById(id))
+    );
+    if (artistChecks.some(artist => !artist)) {
+      throw new Error('One or more artists not found');
+    }
   }
 
   const album = new Album(albumData);
@@ -21,14 +29,14 @@ const getAllAlbums = async ({ page = 1, limit = 10, search = '', artistId = '', 
     query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
   }
   if (artistId) {
-    query.artist = artistId; // Filter by artistId
+    query.artists = artistId; // Mongoose handles finding in array automatically
   }
   if (status !== 'all') {
     query.status = status;
   }
 
   const albums = await Album.find(query)
-    .populate('artist', 'name image') // Populate artist's name and image
+    .populate('artists', 'name image') // Populate artists' name and image
     .skip(skip)
     .limit(limit)
     .sort({ title: 1 }); // Sort by title ascending
@@ -45,16 +53,18 @@ const getAllAlbums = async ({ page = 1, limit = 10, search = '', artistId = '', 
 };
 
 const getAlbumById = async (id) => {
-  const album = await Album.findById(id).populate('artist', 'name image'); // Populate artist
+  const album = await Album.findById(id).populate('artists', 'name image'); // Populate artists
   return album;
 };
 
 const updateAlbum = async (id, updateData) => {
-  // If artist is being updated, validate artist existence
-  if (updateData.artist) {
-    const artistExists = await Artist.findById(updateData.artist);
-    if (!artistExists) {
-      throw new Error('Artist not found');
+  // If artists are being updated, validate existence
+  if (updateData.artists && Array.isArray(updateData.artists)) {
+    const artistChecks = await Promise.all(
+      updateData.artists.map(artId => Artist.findById(artId))
+    );
+    if (artistChecks.some(artist => !artist)) {
+      throw new Error('One or more artists not found');
     }
   }
 
