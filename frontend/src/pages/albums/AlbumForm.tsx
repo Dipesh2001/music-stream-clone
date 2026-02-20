@@ -206,6 +206,7 @@ const AlbumForm: React.FC = () => {
             <ArtistSelect
               selectedArtistIds={selectedArtistIds}
               onArtistChange={setSelectedArtistIds}
+              initialArtists={albumData?.data?.artists}
               label="Artists"
               placeholder="Search and select artists"
               isMulti={true}

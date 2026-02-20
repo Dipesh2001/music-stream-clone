@@ -13,11 +13,11 @@ const createAlbum = asyncHandler(async (req, res) => {
 const listAlbums = asyncHandler(async (req, res) => {
   const { page, limit, search, artistId, status } = req.query;
   const albums = await albumService.getAllAlbums({
-    page: parseInt(page, 10),
-    limit: parseInt(limit, 10),
-    search,
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    search: search || '',
     artistId,
-    status, // Pass the status parameter to the service
+    status: status || 'all',
   });
   return successResponse(res, albums, 'Albums retrieved successfully', 200);
 });

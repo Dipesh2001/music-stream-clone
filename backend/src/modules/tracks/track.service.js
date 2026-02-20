@@ -4,12 +4,12 @@ const Album = require('../albums/album.model');
 const mongoose = require('mongoose');
 
 const createTrack = async (trackData) => {
-  const { artist: artistId, album: albumId } = trackData;
+  const { artists: artistIds, album: albumId } = trackData;
 
-  // Validate Artist and Album existence
-  const artist = await Artist.findById(artistId);
-  if (!artist) {
-    throw new Error('Artist not found');
+  // Validate Artists and Album existence
+  const artistsCount = await Artist.countDocuments({ _id: { $in: artistIds } });
+  if (artistsCount !== artistIds.length) {
+    throw new Error('One or more artists not found');
   }
 
   const album = await Album.findById(albumId);
@@ -17,9 +17,10 @@ const createTrack = async (trackData) => {
     throw new Error('Album not found');
   }
 
-  // Ensure album belongs to the artist
-  if (album.artist.toString() !== artistId) {
-    throw new Error('Album does not belong to the specified artist');
+  // Ensure album belongs to at least one of the specified artists
+  const hasValidArtist = album.artists.some(id => artistIds.includes(id.toString()));
+  if (!hasValidArtist) {
+    throw new Error('Album does not belong to any of the specified artists');
   }
 
   const track = new Track(trackData);
@@ -29,69 +30,79 @@ const createTrack = async (trackData) => {
 
 const getAllTracks = async ({ page = 1, limit = 10, search = '', albumId, artistId, includeInactive = false }) => {
   const skip = (page - 1) * limit;
+  const query = {};
   if (!includeInactive) {
     query.status = 'active';
   }
 
   if (search) {
-    query.title = { $regex: search, $options: 'i' };
+    const [matchingArtists, matchingAlbums] = await Promise.all([
+      Artist.find({ name: { $regex: search, $options: 'i' } }).select('_id'),
+      Album.find({ title: { $regex: search, $options: 'i' } }).select('_id')
+    ]);
+
+    query.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { artists: { $in: matchingArtists.map(a => a._id) } },
+      { album: { $in: matchingAlbums.map(a => a._id) } }
+    ];
   }
 
   if (albumId) {
-    if (!mongoose.Types.ObjectId.isValid(albumId)) {
+    const albumIds = Array.isArray(albumId) ? albumId : [albumId];
+    if (albumIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
       throw new Error('Invalid Album ID format');
     }
-    query.album = albumId;
+    if (albumIds.length > 0) {
+      query.album = { $in: albumIds };
+    }
   }
 
   if (artistId) {
-    if (!mongoose.Types.ObjectId.isValid(artistId)) {
-      throw new Error('Invalid Artist ID format');
+    const artistIds = Array.isArray(artistId) ? artistId : [artistId];
+    if (artistIds.length > 0) {
+      query.artists = { $in: artistIds };
     }
-    query.artist = artistId;
   }
 
   const tracks = await Track.find(query)
     .populate({
-      path: 'artist',
-      select: 'name image -_id', // Select only name and image for artist
+      path: 'artists',
+      select: 'name image',
     })
     .populate({
       path: 'album',
-      select: 'title coverImage -_id', // Select only title and coverImage for album
+      select: 'title coverImage', // Include _id to allow ID matching in frontend
     })
     .skip(skip)
     .limit(parseInt(limit))
     .lean(); // Use .lean() for faster query if not modifying the document
 
-  const totalTracks = await Track.countDocuments(query);
+  const total = await Track.countDocuments(query);
 
   return {
     tracks,
-    totalTracks,
+    total,
     page: parseInt(page),
     limit: parseInt(limit),
-    totalPages: Math.ceil(totalTracks / limit),
+    totalPages: Math.ceil(total / limit),
   };
 };
 
 const getTrackById = async (id, includeInactive = false) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new Error('Invalid Track ID format');
-  }
-
+  const query = { _id: id };
   if (!includeInactive) {
     query.status = 'active';
   }
 
   const track = await Track.findOne(query)
     .populate({
-      path: 'artist',
-      select: 'name image -_id',
+      path: 'artists',
+      select: 'name image',
     })
     .populate({
       path: 'album',
-      select: 'title coverImage -_id',
+      select: 'title coverImage',
     })
     .lean();
 
@@ -111,14 +122,14 @@ const updateTrack = async (id, updateData) => {
     throw new Error('Track not found');
   }
 
-  // If artist or album is updated, re-validate relationship
-  if (updateData.artist || updateData.album) {
-    const artistId = updateData.artist || track.artist.toString();
+  // If artists or album is updated, re-validate relationship
+  if (updateData.artists || updateData.album) {
+    const artistIds = updateData.artists || track.artists.map(id => id.toString());
     const albumId = updateData.album || track.album.toString();
 
-    const artist = await Artist.findById(artistId);
-    if (!artist) {
-      throw new Error('Artist not found');
+    const artistsCount = await Artist.countDocuments({ _id: { $in: artistIds } });
+    if (artistsCount !== artistIds.length) {
+      throw new Error('One or more artists not found');
     }
 
     const album = await Album.findById(albumId);
@@ -126,8 +137,9 @@ const updateTrack = async (id, updateData) => {
       throw new Error('Album not found');
     }
 
-    if (album.artist.toString() !== artistId) {
-      throw new Error('Album does not belong to the specified artist');
+    const hasValidArtist = album.artists.some(id => artistIds.includes(id.toString()));
+    if (!hasValidArtist) {
+      throw new Error('Album does not belong to any of the specified artists');
     }
   }
 
@@ -170,6 +182,23 @@ const incrementPlayCount = async (id) => {
 };
 
 
+const updateTrackOrder = async ({ albumId, orders }) => {
+  if (!mongoose.Types.ObjectId.isValid(albumId)) {
+    throw new Error('Invalid Album ID format');
+  }
+
+  const batchOps = orders.map(({ trackId, order }) => ({
+    updateOne: {
+      filter: { _id: trackId, album: albumId },
+      update: { $set: { order } },
+    },
+  }));
+
+  await Track.bulkWrite(batchOps);
+  return { message: 'Track orders updated successfully' };
+};
+
+
 module.exports = {
   createTrack,
   getAllTracks,
@@ -177,4 +206,5 @@ module.exports = {
   updateTrack,
   deleteTrack,
   incrementPlayCount,
+  updateTrackOrder,
 };

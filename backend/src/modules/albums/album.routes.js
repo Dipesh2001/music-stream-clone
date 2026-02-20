@@ -14,8 +14,6 @@ const normalizeArtists = (req, res, next) => {
       ? req.body['artists[]']
       : [req.body['artists[]']];
     delete req.body['artists[]'];
-  } else if (!req.body.artists) {
-    req.body.artists = [];
   }
   next();
 };

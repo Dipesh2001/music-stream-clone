@@ -3,6 +3,10 @@ const { successResponse, errorResponse } = require('../../utils/response');
 const trackService = require('./track.service');
 
 const createTrack = asyncHandler(async (req, res) => {
+  if (req.file) {
+    req.body.audioUrl = `/uploads/tracks/${req.file.filename}`;
+  }
+
   const track = await trackService.createTrack(req.body);
   successResponse(res, track, 'Track created successfully', 201);
 });
@@ -11,15 +15,15 @@ const listTracks = asyncHandler(async (req, res) => {
   const { page, limit, search, albumId, artistId } = req.query;
   const includeInactive = req.user && req.user.role === 'admin'; // Admins can see inactive tracks
 
-  const { tracks, totalTracks, totalPages } = await trackService.getAllTracks({
-    page,
-    limit,
-    search,
+  const result = await trackService.getAllTracks({
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    search: search || '',
     albumId,
     artistId,
     includeInactive,
   });
-  successResponse(res, { tracks, totalTracks, totalPages }, 'Tracks fetched successfully');
+  successResponse(res, result, 'Tracks fetched successfully');
 });
 
 const getTrack = asyncHandler(async (req, res) => {
@@ -31,6 +35,10 @@ const getTrack = asyncHandler(async (req, res) => {
 
 const updateTrack = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  if (req.file) {
+    req.body.audioUrl = `/uploads/tracks/${req.file.filename}`;
+  }
+
   const track = await trackService.updateTrack(id, req.body);
   successResponse(res, track, 'Track updated successfully');
 });
@@ -47,6 +55,11 @@ const incrementPlayCount = asyncHandler(async (req, res) => {
   successResponse(res, { playCount: track.playCount }, 'Play count incremented successfully');
 });
 
+const updateTrackOrder = asyncHandler(async (req, res) => {
+  const result = await trackService.updateTrackOrder(req.body);
+  successResponse(res, result, 'Track orders updated successfully');
+});
+
 module.exports = {
   createTrack,
   listTracks,
@@ -54,4 +67,5 @@ module.exports = {
   updateTrack,
   deleteTrack,
   incrementPlayCount,
+  updateTrackOrder,
 };

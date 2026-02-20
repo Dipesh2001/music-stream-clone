@@ -48,7 +48,7 @@ const updateArtist = async (id, updateData) => {
 };
 
 const deleteArtist = async (id) => {
-  const artist = await Artist.findByIdAndUpdate(id, { status: 'inactive' }, { new: true }); // Soft delete
+  const artist = await Artist.findByIdAndDelete(id); // Hard delete
   return artist;
 };
 

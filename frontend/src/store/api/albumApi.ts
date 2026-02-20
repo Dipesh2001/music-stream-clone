@@ -31,7 +31,7 @@ export const albumApi = baseApi.injectEndpoints({
     }),
     getAlbums: builder.query<
       AlbumListResponse,
-      { page?: number; limit?: number; search?: string; artistId?: string }
+      { page?: number; limit?: number; search?: string; artistId?: string | string[] }
     >({
       query: (params) => ({
         url: '/albums',

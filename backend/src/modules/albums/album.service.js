@@ -29,7 +29,10 @@ const getAllAlbums = async ({ page = 1, limit = 10, search = '', artistId = '', 
     query.title = { $regex: search, $options: 'i' }; // Case-insensitive search
   }
   if (artistId) {
-    query.artists = artistId; // Mongoose handles finding in array automatically
+    const artistIds = Array.isArray(artistId) ? artistId : [artistId];
+    if (artistIds.length > 0) {
+      query.artists = { $in: artistIds };
+    }
   }
   if (status !== 'all') {
     query.status = status;
@@ -73,7 +76,7 @@ const updateAlbum = async (id, updateData) => {
 };
 
 const deleteAlbum = async (id) => {
-  const album = await Album.findByIdAndUpdate(id, { status: 'inactive' }, { new: true }); // Soft delete
+  const album = await Album.findByIdAndDelete(id); // Hard delete
   return album;
 };
 

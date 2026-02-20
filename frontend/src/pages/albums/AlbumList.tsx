@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useGetAlbumsQuery, useDeleteAlbumMutation } from '../../store/api/albumApi';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useGetAlbumsQuery, useDeleteAlbumMutation, useUpdateAlbumMutation } from '../../store/api/albumApi';
+import { AlbumStatus } from '../../types/album.types';
+import { toast } from 'react-toastify';
 import { DataTable } from '../../components/table/DataTable';
 import type { ColumnDefinition, TableAction } from '../../components/table/Table.types';
 import type { Album } from '../../types/album.types';
@@ -16,7 +18,7 @@ const AlbumList: React.FC = () => {
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [limit, setLimit] = useState(Number(searchParams.get('limit')) || 10);
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [artistId, setArtistId] = useState<string | undefined>(searchParams.get('artistId') || undefined);
+  const [artistIds, setArtistIds] = useState<string[]>(searchParams.get('artistIds')?.split(',').filter(Boolean) || []);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [albumToDelete, setAlbumToDelete] = useState<Album | null>(null);
@@ -25,10 +27,11 @@ const AlbumList: React.FC = () => {
     page,
     limit,
     search,
-    artistId,
+    artistId: artistIds.length > 0 ? artistIds : undefined,
   });
 
   const [deleteAlbum, { isLoading: isDeleting }] = useDeleteAlbumMutation();
+  const [updateAlbum] = useUpdateAlbumMutation();
 
   // Update URL search params whenever state changes
   React.useEffect(() => {
@@ -36,9 +39,9 @@ const AlbumList: React.FC = () => {
     if (page !== 1) params.set('page', page.toString());
     if (limit !== 10) params.set('limit', limit.toString());
     if (search) params.set('search', search);
-    if (artistId) params.set('artistId', artistId);
+    if (artistIds.length > 0) params.set('artistIds', artistIds.join(','));
     setSearchParams(params);
-  }, [page, limit, search, artistId, setSearchParams]);
+  }, [page, limit, search, artistIds, setSearchParams]);
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
@@ -55,7 +58,7 @@ const AlbumList: React.FC = () => {
   };
 
   const handleArtistSelectChange = (ids: string[]) => {
-    setArtistId(ids.length > 0 ? ids[0] : undefined); // Get the first ID if available
+    setArtistIds(ids);
     setPage(1); // Reset to first page on new filter
   };
 
@@ -66,9 +69,27 @@ const AlbumList: React.FC = () => {
 
   const confirmDelete = async () => {
     if (albumToDelete) {
-      await deleteAlbum(albumToDelete._id);
-      setShowDeleteModal(false);
-      setAlbumToDelete(null);
+      try {
+        await deleteAlbum(albumToDelete._id).unwrap();
+        toast.success('Album permanently deleted');
+        setShowDeleteModal(false);
+        setAlbumToDelete(null);
+      } catch (error) {
+        toast.error('Failed to delete album');
+      }
+    }
+  };
+
+  const handleStatusToggle = async (album: Album) => {
+    const newStatus = album.status === AlbumStatus.ACTIVE ? AlbumStatus.INACTIVE : AlbumStatus.ACTIVE;
+    try {
+      await updateAlbum({
+        id: album._id,
+        body: { status: newStatus }
+      }).unwrap();
+      toast.success(`Album status updated to ${newStatus}`);
+    } catch (error) {
+      toast.error('Failed to update status');
     }
   };
 
@@ -78,11 +99,21 @@ const AlbumList: React.FC = () => {
         header: 'Cover',
         accessor: 'coverImage',
         render: (album) => (
-          <img src={getImageUrl(album.coverImage)} alt={album.title} className="h-10 w-10 object-cover rounded-md border border-gray-100 dark:border-gray-800" />
+          <Link to={`/albums/${album._id}`}>
+            <img src={getImageUrl(album.coverImage)} alt={album.title} className="h-10 w-10 object-cover rounded-md border border-gray-100 dark:border-gray-800 hover:opacity-80 transition-opacity" />
+          </Link>
         ),
         className: 'w-16',
       },
-      { header: 'Title', accessor: 'title' },
+      {
+        header: 'Title',
+        accessor: 'title',
+        render: (album) => (
+          <Link to={`/albums/${album._id}`} className="font-medium text-brand-600 hover:underline">
+            {album.title}
+          </Link>
+        )
+      },
       { header: 'Artists', accessor: (album) => album.artists.map(artist => artist.name).join(', ') },
       { header: 'Genre', accessor: 'genre' },
       { header: 'Release Date', accessor: (album) => album.releaseDate ? new Date(album.releaseDate).toLocaleDateString() : 'N/A' },
@@ -90,10 +121,21 @@ const AlbumList: React.FC = () => {
         header: 'Status',
         accessor: 'status',
         render: (album) => (
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${album.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-            }`}>
-            {album.status.charAt(0).toUpperCase() + album.status.slice(1)}
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleStatusToggle(album)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${album.status === 'active' ? 'bg-brand-500' : 'bg-gray-200'
+                }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${album.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+              />
+            </button>
+            <span className={`text-xs font-medium ${album.status === 'active' ? 'text-green-700' : 'text-gray-500'}`}>
+              {album.status.charAt(0).toUpperCase() + album.status.slice(1)}
+            </span>
+          </div>
         )
       },
     ],
@@ -102,6 +144,7 @@ const AlbumList: React.FC = () => {
 
   const actions: TableAction<Album>[] = useMemo(
     () => [
+      { label: 'View', onClick: (album) => navigate(`/albums/${album._id}`) },
       { label: 'Edit', onClick: (album) => navigate(`/albums/${album._id}/edit`) },
       { label: 'Delete', onClick: handleDeleteClick, className: 'text-red-600' },
     ],
@@ -140,11 +183,12 @@ const AlbumList: React.FC = () => {
           </div>
 
           <ArtistSelect
-            selectedArtistIds={artistId ? [artistId] : []}
+            selectedArtistIds={artistIds}
             onArtistChange={handleArtistSelectChange}
             placeholder="Filter by artist"
             className="min-w-[200px]"
             label=""
+            isMulti={true}
           />
 
           <button

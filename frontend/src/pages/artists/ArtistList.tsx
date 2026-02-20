@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useGetArtistsQuery, useDeleteArtistMutation } from "../../store/api/artistApi";
 import type { Artist } from "../../types/artist.types";
 import { ArtistStatus } from "../../types/artist.types";
@@ -87,19 +87,23 @@ const ArtistList: React.FC = () => {
         accessor: "image",
         render: (artist) => (
           <div className="flex items-center">
-            {artist.image ? (
-              <img
-                src={getImageUrl(artist.image)}
-                alt={artist.name}
-                className="h-10 w-10 object-cover rounded-full border border-gray-100 dark:border-gray-800"
-              />
-            ) : (
-              <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 font-bold uppercase">
-                {artist.name.charAt(0)}
-              </div>
-            )}
+            <Link to={`/artists/${artist._id}`}>
+              {artist.image ? (
+                <img
+                  src={getImageUrl(artist.image)}
+                  alt={artist.name}
+                  className="h-10 w-10 object-cover rounded-full border border-gray-100 dark:border-gray-800 hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div className="h-10 w-10 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 font-bold uppercase hover:bg-gray-200 transition-colors">
+                  {artist.name.charAt(0)}
+                </div>
+              )}
+            </Link>
             <div className="ml-3">
-              <div className="text-sm font-medium text-gray-900 dark:text-white">{artist.name}</div>
+              <Link to={`/artists/${artist._id}`} className="text-sm font-medium text-brand-600 hover:underline">
+                {artist.name}
+              </Link>
             </div>
           </div>
         ),
@@ -125,6 +129,7 @@ const ArtistList: React.FC = () => {
 
   const actions: TableAction<Artist>[] = useMemo(
     () => [
+      { label: "View", onClick: (artist) => navigate(`/artists/${artist._id}`) },
       { label: "Edit", onClick: (artist) => navigate(`/artists/${artist._id}/edit`) },
       { label: "Delete", onClick: handleDeleteClick, className: "text-red-600 hover:text-red-800" },
     ],

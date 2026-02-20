@@ -20,6 +20,46 @@ const createPlaylist = async (userId, playlistData) => {
   return playlist;
 };
 
+const getAllPlaylists = async ({ page = 1, limit = 10, search = '', userId = '', visibility = '' }) => {
+  const skip = (page - 1) * limit;
+  const query = { status: 'active' };
+
+  if (search) {
+    query.name = { $regex: search, $options: 'i' };
+  }
+  if (userId) {
+    query.owner = userId;
+  }
+  if (visibility) {
+    query.isPublic = visibility === 'public';
+  }
+
+  const playlists = await Playlist.find(query)
+    .populate('owner', 'name email')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await Playlist.countDocuments(query);
+
+  const formattedPlaylists = playlists.map(p => {
+    const obj = p.toObject();
+    return {
+      ...obj,
+      trackCount: p.tracks ? p.tracks.length : 0,
+      visibility: obj.isPublic ? 'public' : 'private'
+    };
+  });
+
+  return {
+    playlists: formattedPlaylists,
+    total,
+    page: parseInt(page),
+    limit: parseInt(limit),
+    totalPages: Math.ceil(total / limit),
+  };
+};
+
 const getMyPlaylists = async (userId, { page = 1, limit = 10, search = '' }) => {
   const skip = (page - 1) * limit;
   const query = { owner: userId, status: 'active' };
@@ -30,12 +70,18 @@ const getMyPlaylists = async (userId, { page = 1, limit = 10, search = '' }) => 
   const playlists = await Playlist.find(query)
     .populate({
       path: 'tracks',
-      select: 'title duration artist status',
-      match: { status: 'active' }, // Only populate active tracks
-      populate: {
-        path: 'artist',
-        select: 'name -_id'
-      }
+      select: 'title duration artists status album',
+      match: { status: 'active' },
+      populate: [
+        {
+          path: 'artists',
+          select: 'name image -_id'
+        },
+        {
+          path: 'album',
+          select: 'title coverImage'
+        }
+      ]
     })
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -43,8 +89,17 @@ const getMyPlaylists = async (userId, { page = 1, limit = 10, search = '' }) => 
 
   const total = await Playlist.countDocuments(query);
 
+  const formattedPlaylists = playlists.map(p => {
+    const obj = p.toObject();
+    return {
+      ...obj,
+      trackCount: p.tracks ? p.tracks.length : 0,
+      visibility: obj.isPublic ? 'public' : 'private'
+    };
+  });
+
   return {
-    playlists,
+    playlists: formattedPlaylists,
     total,
     page,
     limit,
@@ -63,12 +118,18 @@ const getPublicPlaylists = async ({ page = 1, limit = 10, search = '' }) => {
   const playlists = await Playlist.find(query)
     .populate({
       path: 'tracks',
-      select: 'title duration artist status',
-      match: { status: 'active' }, // Only populate active tracks
-      populate: {
-        path: 'artist',
-        select: 'name -_id'
-      }
+      select: 'title duration artists status album',
+      match: { status: 'active' },
+      populate: [
+        {
+          path: 'artists',
+          select: 'name image -_id'
+        },
+        {
+          path: 'album',
+          select: 'title coverImage'
+        }
+      ]
     })
     .sort({ createdAt: -1 })
     .skip(skip)
@@ -76,8 +137,17 @@ const getPublicPlaylists = async ({ page = 1, limit = 10, search = '' }) => {
 
   const totalPlaylists = await Playlist.countDocuments(query);
 
+  const formattedPlaylists = playlists.map(p => {
+    const obj = p.toObject();
+    return {
+      ...obj,
+      trackCount: p.tracks ? p.tracks.length : 0,
+      visibility: obj.isPublic ? 'public' : 'private'
+    };
+  });
+
   return {
-    playlists,
+    playlists: formattedPlaylists,
     totalPlaylists,
     page: parseInt(page),
     limit: parseInt(limit),
@@ -93,16 +163,22 @@ const getPlaylistById = async (id, userId) => {
   const playlist = await Playlist.findById(id)
     .populate({
       path: 'owner',
-      select: 'name email -_id'
+      select: 'name email'
     })
     .populate({
       path: 'tracks',
-      select: 'title duration artist status',
-      match: { status: 'active' }, // Only populate active tracks
-      populate: {
-        path: 'artist',
-        select: 'name -_id'
-      }
+      select: 'title duration artists status createdAt album audioUrl',
+      match: { status: 'active' },
+      populate: [
+        {
+          path: 'artists',
+          select: 'name image'
+        },
+        {
+          path: 'album',
+          select: 'title coverImage'
+        }
+      ]
     });
 
   if (!playlist || playlist.status !== 'active') {
@@ -110,11 +186,15 @@ const getPlaylistById = async (id, userId) => {
   }
 
   // If playlist is private, only owner can view
-  if (!playlist.isPublic && playlist.owner.toString() !== userId.toString()) {
+  if (!playlist.isPublic && playlist.owner._id.toString() !== userId.toString()) {
     throw new Error('Forbidden: You do not have access to this private playlist');
   }
 
-  return playlist;
+  const playlistObj = playlist.toObject();
+  playlistObj.trackCount = playlist.tracks ? playlist.tracks.length : 0;
+  playlistObj.visibility = playlist.isPublic ? 'public' : 'private';
+
+  return playlistObj;
 };
 
 const addTrackToPlaylist = async (playlistId, trackId, userId) => {
@@ -151,6 +231,14 @@ const removeTrackFromPlaylist = async (playlistId, trackId, userId) => {
   return playlist;
 };
 
+const updatePlaylist = async (playlistId, userId, updateData) => {
+  const playlist = await checkPlaylistOwnership(playlistId, userId);
+
+  Object.assign(playlist, updateData);
+  await playlist.save();
+  return playlist;
+};
+
 const deletePlaylist = async (playlistId, userId) => {
   const playlist = await checkPlaylistOwnership(playlistId, userId);
 
@@ -161,10 +249,12 @@ const deletePlaylist = async (playlistId, userId) => {
 
 module.exports = {
   createPlaylist,
+  getAllPlaylists,
   getMyPlaylists,
   getPublicPlaylists,
   getPlaylistById,
   addTrackToPlaylist,
   removeTrackFromPlaylist,
+  updatePlaylist,
   deletePlaylist,
 };

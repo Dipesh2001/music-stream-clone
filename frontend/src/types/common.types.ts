@@ -22,6 +22,7 @@ export interface PaginatedResult<T> {
   tracks?: T[]; // Example for other modules
   albums?: T[]; // Example for other modules
   users?: T[]; // Example for other modules
+  playlists?: T[];
   data?: T[]; // General fallback if the key is generic 'data' at the backend service level
   total: number;
   page: number;

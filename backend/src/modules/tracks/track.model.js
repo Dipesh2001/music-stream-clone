@@ -7,11 +7,10 @@ const trackSchema = new mongoose.Schema({
     trim: true,
     index: true,
   },
-  artist: {
+  artists: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Artist',
-    required: [true, 'Artist is required'],
-  },
+  }],
   album: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Album',
@@ -39,6 +38,11 @@ const trackSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: [0, 'Play count cannot be negative'],
+  },
+  order: {
+    type: Number,
+    default: 0,
+    index: true,
   },
   status: {
     type: String,

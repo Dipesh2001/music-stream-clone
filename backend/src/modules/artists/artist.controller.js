@@ -10,10 +10,10 @@ const createArtist = asyncHandler(async (req, res) => {
 const listArtists = asyncHandler(async (req, res) => {
   const { page, limit, search, status } = req.query;
   const artists = await artistService.getAllArtists({
-    page: parseInt(page, 10),
-    limit: parseInt(limit, 10),
-    search,
-    status,
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    search: search || '',
+    status: status || 'all',
   });
   return successResponse(res, artists, 'Artists retrieved successfully', 200);
 });

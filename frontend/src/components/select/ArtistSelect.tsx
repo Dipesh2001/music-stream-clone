@@ -10,6 +10,7 @@ interface ArtistSelectProps {
   isMulti?: boolean; // Flag to enable/disable multi-select behavior
   className?: string; // For additional styling on the wrapper div
   disabled?: boolean;
+  initialArtists?: { _id: string; name: string }[]; // Optional initial artists for the cache
 }
 
 const ArtistSelect: React.FC<ArtistSelectProps> = ({
@@ -20,6 +21,7 @@ const ArtistSelect: React.FC<ArtistSelectProps> = ({
   isMulti = false,
   className = '',
   disabled = false,
+  initialArtists = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false); // To control dropdown visibility
@@ -30,20 +32,50 @@ const ArtistSelect: React.FC<ArtistSelectProps> = ({
   const artists = data?.data?.artists || [];
 
   // Filter artists based on search term
-  const filteredArtists = artists.filter(
-    (artist) =>
-      artist.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !(isMulti && selectedArtistIds.includes(artist._id)) // Hide already selected in multi-select
-  );
+  const filteredArtists = artists.filter((artist) => {
+    const searchWords = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+    const matchesSearch = searchWords.length === 0 || searchWords.some(word => artist.name.toLowerCase().includes(word));
+    return matchesSearch && !selectedArtistIds.includes(artist._id);
+  });
 
-  // Get display info for selected artists
-  // We map IDs to objects to avoid index mismatch when some artists aren't in the current view/search
+  // Cache for artist objects to keep track of names even when they aren't in current search results
+  const [artistsCache, setArtistsCache] = useState<Record<string, { _id: string; name: string }>>(() => {
+    const initialCache: Record<string, { _id: string; name: string }> = {};
+    initialArtists.forEach(artist => {
+      initialCache[artist._id] = artist;
+    });
+    return initialCache;
+  });
+
+  // Also update cache if initialArtists changes (e.g. data fetched)
+  useEffect(() => {
+    if (initialArtists.length > 0) {
+      setArtistsCache((prev) => {
+        const newCache = { ...prev };
+        initialArtists.forEach((artist) => {
+          newCache[artist._id] = artist;
+        });
+        return newCache;
+      });
+    }
+  }, [initialArtists]);
+
+  useEffect(() => {
+    if (artists.length > 0) {
+      setArtistsCache((prev) => {
+        const newCache = { ...prev };
+        artists.forEach((artist) => {
+          newCache[artist._id] = { _id: artist._id, name: artist.name };
+        });
+        return newCache;
+      });
+    }
+  }, [artists]);
+
+  // Get display info for selected artists from the cache
   const selectedArtistObjects = selectedArtistIds
-    .map((id) => {
-      const artist = artists.find((a) => a._id === id);
-      return artist ? { _id: artist._id, name: artist.name } : null;
-    })
-    .filter((a): a is { _id: string; name: string } => a !== null);
+    .map((id) => artistsCache[id])
+    .filter((a): a is { _id: string; name: string } => !!a);
 
   const handleSelect = (artistId: string) => {
     if (isMulti) {
