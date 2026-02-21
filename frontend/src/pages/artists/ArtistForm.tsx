@@ -48,7 +48,7 @@ const ArtistForm: React.FC = () => {
     control,
     formState: { errors },
   } = useForm<ArtistFormData>({
-    resolver: zodResolver(artistFormSchema),
+    resolver: zodResolver(artistFormSchema.partial().required({ name: true, status: true })),
     defaultValues: {
       name: "",
       bio: "",
@@ -73,7 +73,7 @@ const ArtistForm: React.FC = () => {
     }
   }, [isEditMode, artistData, reset]);
 
-  const onSubmit = async (data: ArtistFormData) => {
+  const onSubmit = async (data: Partial<ArtistFormData>) => {
     const formattedData = {
       ...data,
       genres: data.genres ? data.genres.split(",").map(g => g.trim()).filter(g => g) : [],
@@ -140,7 +140,7 @@ const ArtistForm: React.FC = () => {
                     placeholder="Select debut date"
                     value={field.value}
                     onChange={(dates) => {
-                      if (dates.length > 0) {
+                      if (dates && dates.length > 0 && dates[0]) {
                         const date = dates[0];
                         const offset = date.getTimezoneOffset();
                         const localDate = new Date(date.getTime() - offset * 60 * 1000);

@@ -24,7 +24,7 @@ export const artistApi = baseApi.injectEndpoints({
     }),
     getArtistById: builder.query<ArtistApiResponse, string>({
       query: (id) => `/artists/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Artist', id }],
+      providesTags: (_result, _error, id) => [{ type: 'Artist', id }],
     }),
     updateArtist: builder.mutation<ArtistApiResponse, { id: string; body: ArtistUpdateRequest }>({
       query: ({ id, body }) => ({
@@ -32,14 +32,14 @@ export const artistApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Artist', id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Artist', id }],
     }),
     deleteArtist: builder.mutation<ArtistApiResponse, string>({
       query: (id) => ({
         url: `/artists/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (result, error, id) => [{ type: 'Artist', id }],
+      invalidatesTags: (_result, _error, id) => [{ type: 'Artist', id }],
     }),
   }),
 });

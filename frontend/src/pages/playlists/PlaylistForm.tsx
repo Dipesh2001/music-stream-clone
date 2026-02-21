@@ -11,6 +11,7 @@ import Input from '../../components/form/Input';
 import Select from '../../components/form/Select';
 import { toast } from 'react-toastify';
 import PageMeta from '../../components/common/PageMeta';
+import { getImageUrl } from '../../utils/url';
 
 const PlaylistForm: React.FC = () => {
     const navigate = useNavigate();
@@ -39,10 +40,19 @@ const PlaylistForm: React.FC = () => {
             setDescription(playlist.description || '');
             setVisibility(playlist.visibility || PlaylistVisibility.PUBLIC);
             if (playlist.coverImage) {
-                setPreviewUrl(playlist.coverImage);
+                setPreviewUrl(getImageUrl(playlist.coverImage));
             }
         }
     }, [playlistId, playlistData, isEditMode]);
+
+    // Clean up object URL when component unmounts or image changes
+    useEffect(() => {
+        return () => {
+            if (previewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {

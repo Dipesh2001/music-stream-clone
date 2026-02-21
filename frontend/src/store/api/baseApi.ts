@@ -95,6 +95,6 @@ export const baseApi = createApi({
   reducerPath: 'baseApi',
   baseQuery: baseQueryWithReauth, // Use the custom baseQuery
   // Define common tag types for cache invalidation
-  tagTypes: ['Auth', 'User', 'Artist', 'Album', 'Track', 'Playlist'],
+  tagTypes: ['Auth', 'User', 'Artist', 'Album', 'Track', 'Playlist', 'Analytics', 'Search'],
   endpoints: () => ({}), // Empty endpoints as this is the base API
 });

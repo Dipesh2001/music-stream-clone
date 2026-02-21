@@ -169,11 +169,11 @@ const AlbumForm: React.FC = () => {
                 placeholder="Select release date"
                 value={releaseDate}
                 onChange={(dates) => {
-                  if (dates.length > 0) {
+                  if (dates && dates.length > 0 && dates[0]) {
                     const date = dates[0];
                     const offset = date.getTimezoneOffset();
                     const localDate = new Date(date.getTime() - offset * 60 * 1000);
-                    setReleaseDate(localDate.toISOString().split("T")[0]);
+                    setReleaseDate(localDate.toISOString().split("T")[0] || "");
                   } else {
                     setReleaseDate("");
                   }

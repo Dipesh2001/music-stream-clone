@@ -43,6 +43,9 @@ router.use('/player', require('./modules/player/player.routes'));
 // Search Routes - New route mount
 router.use('/search', require('./modules/search/search.routes'));
 
+// Analytics Routes - New route mount
+router.use('/analytics', require('./modules/analytics/analytics.routes'));
+
 // Recommendation Routes - New route mount
 router.use('/recommendations', require('./modules/recommendations/recommendation.routes'));
 

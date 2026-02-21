@@ -25,6 +25,10 @@ const playlistSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  coverImage: {
+    type: String,
+    trim: true,
+  },
   status: {
     type: String,
     enum: ['active', 'inactive'],

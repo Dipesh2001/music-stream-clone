@@ -7,6 +7,7 @@ const createPlaylistSchema = z.object({
     }).trim().min(1, 'Playlist name cannot be empty'),
     description: z.string().trim().optional(),
     visibility: z.enum(['public', 'private']).optional(),
+    coverImage: z.any().optional(),
   }),
 });
 

@@ -4,9 +4,10 @@ import Label from "./Label";
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
+    hint?: string;
 }
 
-const Input: React.FC<InputProps> = ({ label, error, className = "", ...props }) => {
+const Input: React.FC<InputProps> = ({ label, error, hint, className = "", ...props }) => {
     return (
         <div className="w-full">
             {label && <Label htmlFor={props.id}>{label}</Label>}
@@ -19,6 +20,7 @@ const Input: React.FC<InputProps> = ({ label, error, className = "", ...props })
                         } ${className} ${props.disabled ? "bg-gray-100 cursor-not-allowed opacity-60" : ""}`}
                 />
             </div>
+            {hint && <p className="mt-1.5 text-xs text-gray-400">{hint}</p>}
             {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
         </div>
     );

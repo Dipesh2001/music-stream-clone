@@ -1,6 +1,6 @@
 // frontend/src/components/table/Table.types.ts
 
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { Pagination } from "../../types/common.types";
 
 export type ColumnAccessor<T> = keyof T | ((item: T) => ReactNode);

@@ -3,21 +3,40 @@ const Album = require('../albums/album.model');
 const Track = require('../tracks/track.model');
 
 const globalSearch = async (query, { limit = 10 }) => {
-  const searchCriteria = { $text: { $search: query }, isActive: true };
+  // Construct regex for partial, case-insensitive matching
+  const regexQuery = new RegExp(query, 'i');
 
-  const artistResults = await Artist.find(searchCriteria)
+  const artistResults = await Artist.find({
+    $or: [
+      { name: regexQuery },
+      { genres: regexQuery },
+    ],
+    status: 'active',
+  })
     .limit(limit)
     .select('name image genres');
 
-  const albumResults = await Album.find(searchCriteria)
+  const albumResults = await Album.find({
+    $or: [
+      { title: regexQuery },
+      { genres: regexQuery },
+    ],
+    status: 'active',
+  })
     .limit(limit)
-    .select('title coverImage genres artist')
-    .populate('artist', 'name');
+    .select('title coverImage genres artists')
+    .populate('artists', 'name');
 
-  const trackResults = await Track.find(searchCriteria)
+  const trackResults = await Track.find({
+    $or: [
+      { title: regexQuery },
+      { language: regexQuery },
+    ],
+    status: 'active',
+  })
     .limit(limit)
-    .select('title audioUrl duration language isExplicit artist album')
-    .populate('artist', 'name')
+    .select('title audioUrl duration language isExplicit artists album')
+    .populate('artists', 'name')
     .populate('album', 'title coverImage');
 
   return {

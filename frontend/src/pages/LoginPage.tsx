@@ -29,6 +29,7 @@ const LoginPage: React.FC = () => {
           setCredentials({
             user: response.data.user,
             accessToken: response.data.accessToken,
+            refreshToken: response.data.refreshToken,
           })
         );
         console.log('Credentials dispatched. isAuthenticated in Redux should now be true.');
