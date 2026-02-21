@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "seed": "bun backend/scripts/seedAll.js"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3"
   }

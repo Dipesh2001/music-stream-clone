@@ -10,7 +10,7 @@ export function QueueList() {
     <div className="space-y-1 p-4">
       <h3 className="text-lg font-semibold mb-3">Queue</h3>
       {queue.map((track, i) => (
-        <TrackRow key={track.id} track={track} index={i} trackList={queue} />
+        <TrackRow key={track._id} track={track} index={i} trackList={queue} />
       ))}
     </div>
   );

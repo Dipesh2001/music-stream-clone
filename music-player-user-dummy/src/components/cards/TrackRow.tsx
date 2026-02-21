@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Heart, Play, Pause, MoreHorizontal } from "lucide-react";
+import { Heart, Play, Pause } from "lucide-react";
 import type { Track } from "@/types/track";
 import { usePlayer } from "@/hooks/usePlayer";
 import { useState } from "react";
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
+  const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
@@ -17,17 +17,25 @@ interface TrackRowProps {
 }
 
 export function TrackRow({ track, index, trackList }: TrackRowProps) {
-  const { play, pause, currentTrack, isPlaying } = usePlayer();
-  const isCurrentTrack = currentTrack?.id === track.id;
+  const { playTrack, togglePlay, currentTrack, isPlaying } = usePlayer();
+  const isCurrentTrack = currentTrack?._id === track._id;
   const [liked, setLiked] = useState(track.isLiked);
 
-  const handlePlay = () => {
-    if (isCurrentTrack && isPlaying) {
-      pause();
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isCurrentTrack) {
+      togglePlay();
     } else {
-      play(track, trackList);
+      playTrack(track, trackList);
     }
   };
+
+
+  const imageUrl = track.album?.coverImage?.startsWith('http')
+    ? track.album.coverImage
+    : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${track.album?.coverImage}`;
+
+  const artistName = track.artists?.map(a => a.name).join(", ") || "Unknown Artist";
 
   return (
     <motion.div
@@ -38,7 +46,7 @@ export function TrackRow({ track, index, trackList }: TrackRowProps) {
       onClick={handlePlay}
     >
       <div className="relative w-10 h-10 rounded overflow-hidden flex-shrink-0">
-        <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" loading="lazy" />
+        <img src={imageUrl} alt={track.title} className="w-full h-full object-cover bg-muted" loading="lazy" />
         <div className="absolute inset-0 bg-background/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           {isCurrentTrack && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </div>
@@ -46,7 +54,7 @@ export function TrackRow({ track, index, trackList }: TrackRowProps) {
 
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium truncate ${isCurrentTrack ? "text-primary" : ""}`}>{track.title}</p>
-        <p className="text-xs text-muted-foreground truncate">{track.artist.name}</p>
+        <p className="text-xs text-muted-foreground truncate">{artistName}</p>
       </div>
 
       <motion.button

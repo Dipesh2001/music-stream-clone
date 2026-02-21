@@ -1,7 +1,10 @@
 export interface Artist {
-  id: string;
+  _id: string;
   name: string;
-  imageUrl: string;
+  image: string;
   bio?: string;
-  monthlyListeners?: number;
+  genres?: string[];
+  status?: 'active' | 'inactive';
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -39,14 +39,14 @@ export function FullscreenPlayer() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
               <motion.img
-                src={currentTrack.coverUrl}
+                src={currentTrack.album?.coverImage?.startsWith('http') ? currentTrack.album?.coverImage : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'}${currentTrack.album?.coverImage || '/placeholder.svg'}`}
                 alt={currentTrack.title}
-                className="w-64 h-64 md:w-80 md:h-80 rounded-2xl object-cover shadow-2xl"
+                className="w-64 h-64 md:w-80 md:h-80 rounded-2xl object-cover shadow-2xl bg-muted"
                 layoutId="player-cover"
               />
               <div className="text-center w-full max-w-md">
                 <h2 className="text-2xl font-bold truncate">{currentTrack.title}</h2>
-                <p className="text-muted-foreground">{currentTrack.artist.name}</p>
+                <p className="text-muted-foreground">{currentTrack.artists?.map(a => a.name).join(", ") || "Unknown Artist"}</p>
               </div>
               <div className="w-full max-w-md">
                 <ProgressBar value={progress} max={duration} onChange={seek} />

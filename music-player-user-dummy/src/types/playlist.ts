@@ -1,12 +1,19 @@
 import type { Track } from "./track";
 
 export interface Playlist {
-  id: string;
-  title: string;
+  _id: string;
+  name: string;
   description?: string;
-  coverUrl?: string;
-  tracks: Track[];
-  owner: { id: string; name: string };
+  owner: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  tracks: Track[] | string[];
   isPublic: boolean;
-  trackCount: number;
+  coverImage?: string;
+  status?: 'active' | 'inactive';
+  createdAt?: string;
+  updatedAt?: string;
 }

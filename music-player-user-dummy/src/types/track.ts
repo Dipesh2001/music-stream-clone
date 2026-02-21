@@ -2,12 +2,18 @@ import type { Artist } from "./artist";
 import type { Album } from "./album";
 
 export interface Track {
-  id: string;
+  _id: string;
   title: string;
-  duration: number;
-  artist: Artist;
+  artists: Artist[];
   album: Album;
-  coverUrl: string;
-  streamUrl: string;
-  isLiked: boolean;
+  audioUrl: string;
+  duration: number;
+  playCount: number;
+  isExplicit?: boolean;
+  language?: string;
+  order?: number;
+  status?: 'active' | 'inactive';
+  isLiked?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }

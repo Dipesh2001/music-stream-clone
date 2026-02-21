@@ -2,10 +2,14 @@ import type { Artist } from "./artist";
 import type { Track } from "./track";
 
 export interface Album {
-  id: string;
+  _id: string;
   title: string;
-  coverUrl: string;
-  artist: Artist;
-  releaseYear: number;
-  tracks: Track[];
+  coverImage: string;
+  artists: Artist[];
+  releaseDate: string;
+  genre: string;
+  status?: 'active' | 'inactive';
+  tracks?: Track[];
+  createdAt?: string;
+  updatedAt?: string;
 }

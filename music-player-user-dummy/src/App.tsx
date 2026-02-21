@@ -31,7 +31,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             {/* TEMP: remove after auth verification */}
             <AuthStatusBanner />
             <Routes>
@@ -57,6 +57,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+
         </TooltipProvider>
       </PlayerProvider>
     </AuthProvider>
