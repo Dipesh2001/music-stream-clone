@@ -14,7 +14,6 @@ interface CustomFetchBaseQueryError {
   data: {
     message: string;
     statusCode?: number;
-    // Add other common error fields from your backend
   };
 }
 
