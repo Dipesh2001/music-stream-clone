@@ -11,7 +11,7 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import { useSidebar } from "../context/SidebarContext";
-import SidebarWidget from "./SidebarWidget";
+
 import type React from "react"; // Explicitly import React type
 
 type NavItem = {

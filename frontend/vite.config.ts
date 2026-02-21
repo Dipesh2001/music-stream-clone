@@ -7,4 +7,17 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@reduxjs/toolkit'],
   },
+  build: {
+    sourcemap: false, // Disable sourcemaps for production builds to reduce size
+    reportCompressedSize: true, // Report gzip/brotli size of the bundle
+    rollupOptions: {
+      output: {
+        // Manual chunking for vendor libraries
+        manualChunks: {
+          vendor: ['react', 'react-router-dom', 'react-dom', 'redux', '@reduxjs/toolkit'],
+          // Optionally, create more chunks for other large libraries
+        },
+      },
+    },
+  },
 })
