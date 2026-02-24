@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoginUserMutation } from '../store/api/authApi';
 import type { LoginRequest } from '../types/auth.types';
-import { useDispatch } from 'react-redux';
-import { setCredentials } from '../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCredentials, selectIsAuthenticated } from '../store/slices/authSlice';
 
 
 const LoginPage: React.FC = () => {
@@ -14,6 +14,13 @@ const LoginPage: React.FC = () => {
   const [loginUser, { isLoading }] = useLoginUserMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLogoutUserMutation } from '../../store/api/authApi';
 import { toast } from 'react-toastify';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../store/slices/authSlice';
+import type { AuthUser } from '../../types/auth.types';
 
 const UserDropdown: React.FC = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [logoutUser] = useLogoutUserMutation();
+  const user = useSelector(selectCurrentUser) as AuthUser | null;
 
   const handleLogout = async () => {
     try {
@@ -37,11 +41,15 @@ const UserDropdown: React.FC = () => {
         onClick={() => setDropdownOpen(!dropdownOpen)}
       >
         <span className="hidden text-right lg:block">
-          <span className="block text-sm font-medium text-gray-800 dark:text-white">Admin User</span>
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">Administrator</span>
+          <span className="block text-sm font-medium text-gray-800 dark:text-white">{user?.name || 'Admin User'}</span>
+          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400 capitalize">{user?.role || 'Administrator'}</span>
         </span>
-        <span className="h-12 w-12 rounded-full">
-          <img src="https://via.placeholder.com/48x48" alt="User" className="h-full w-full rounded-full object-cover" />
+        <span className="h-12 w-12 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+          <img
+            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=random`}
+            alt="User"
+            className="h-full w-full object-cover"
+          />
         </span>
       </button>
 
@@ -49,7 +57,7 @@ const UserDropdown: React.FC = () => {
         <div
           className="absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border border-gray-200 bg-white shadow-default dark:border-gray-800 dark:bg-gray-700"
         >
-          <ul className="flex flex-col gap-5 border-b border-gray-200 px-6 py-7.5 dark:border-gray-800">
+          {/* <ul className="flex flex-col gap-5 border-b border-gray-200 px-6 py-7.5 dark:border-gray-800">
             <li>
               <Link
                 to="/profile"
@@ -66,7 +74,7 @@ const UserDropdown: React.FC = () => {
                 Account Settings
               </Link>
             </li>
-          </ul>
+          </ul> */}
           <button
             onClick={handleLogout}
             className="flex items-center gap-3.5 px-6 py-4 text-sm font-medium duration-300 ease-in-out hover:text-brand-500 lg:text-base"

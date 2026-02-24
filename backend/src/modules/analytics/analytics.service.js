@@ -6,11 +6,11 @@ const Playlist = require('../playlists/playlist.model');
 
 const getDashboardStats = async () => {
     const [totalArtists, totalAlbums, totalTracks, totalUsers, totalPlaylists] = await Promise.all([
-        Artist.countDocuments({ status: 'active' }),
-        Album.countDocuments({ status: 'active' }),
-        Track.countDocuments({ status: 'active' }),
-        User.countDocuments({ isActive: true }),
-        Playlist.countDocuments({ status: 'active' }),
+        Artist.countDocuments(),
+        Album.countDocuments(),
+        Track.countDocuments(),
+        User.countDocuments(),
+        Playlist.countDocuments(),
     ]);
 
     // Aggregate total plays across all tracks
