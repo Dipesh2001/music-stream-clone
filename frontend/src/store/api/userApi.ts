@@ -18,7 +18,37 @@ export const userApi = baseApi.injectEndpoints({
       query: () => '/protected',
       providesTags: ['User'], // Or a more specific tag if applicable
     }),
+    getAllUsers: builder.query<any, { page?: number; limit?: number; search?: string; role?: string; isActive?: boolean }>({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.append('page', params.page.toString());
+        if (params.limit) queryParams.append('limit', params.limit.toString());
+        if (params.search) queryParams.append('search', params.search);
+        if (params.role) queryParams.append('role', params.role);
+        if (params.isActive !== undefined) queryParams.append('isActive', params.isActive.toString());
+
+        return {
+          url: `/users?${queryParams.toString()}`,
+          method: 'GET',
+        };
+      },
+      providesTags: ['User'],
+    }),
+    updateUserStatus: builder.mutation<any, { id: string; isActive: boolean }>({
+      query: ({ id, isActive }) => ({
+        url: `/users/${id}/status`,
+        method: 'PATCH',
+        body: { isActive },
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
-export const { useGetUserProfileQuery, useUpdateUserProfileMutation, useGetProtectedRouteQuery } = userApi;
+export const {
+  useGetUserProfileQuery,
+  useUpdateUserProfileMutation,
+  useGetProtectedRouteQuery,
+  useGetAllUsersQuery,
+  useUpdateUserStatusMutation
+} = userApi;

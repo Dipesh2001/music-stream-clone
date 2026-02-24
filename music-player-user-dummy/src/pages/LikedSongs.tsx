@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LikedSongs() {
   const { data: favorites, isLoading } = useFavorites();
-  const { play } = usePlayer();
+  const { playTrack } = usePlayer();
 
   const likedTracks = favorites?.tracks || [];
 
@@ -29,7 +29,7 @@ export default function LikedSongs() {
       <div className="flex items-center gap-4">
         {likedTracks.length > 0 && (
           <button
-            onClick={() => play(likedTracks[0], likedTracks)}
+            onClick={() => playTrack(likedTracks[0], likedTracks)}
             className="h-14 w-14 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform shadow-lg"
           >
             <Play className="h-7 w-7 text-primary-foreground fill-current" />

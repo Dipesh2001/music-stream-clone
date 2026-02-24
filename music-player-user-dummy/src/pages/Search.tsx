@@ -30,6 +30,7 @@ export default function Search() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold">Browse All</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Dummy data commented out as requested
             {[
               { genre: "Pop", color: "bg-pink-600" },
               { genre: "Rock", color: "bg-red-700" },
@@ -46,10 +47,10 @@ export default function Search() {
                 className={`relative aspect-[16/10] rounded-lg overflow-hidden cursor-pointer ${color} p-4`}
               >
                 <span className="text-xl font-bold text-white">{genre}</span>
-                {/* Subtle graphic element */}
                 <div className="absolute -bottom-2 -right-2 w-16 h-16 bg-white/10 rounded-full blur-2xl" />
               </motion.div>
             ))}
+            */}
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 // music-player-user-dummy/src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { IUser } from '../types/user.types';
-import { getAccessToken, getRefreshToken, clearAuthTokens } from '../utils/auth';
+
 import authService from '../services/authService';
 import axios from '../lib/axios'; // Import the configured axios instance
 import { ApiResponse } from '../types/api.types';
@@ -25,28 +25,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = useCallback(async () => {
     setLoading(true);
-    const accessToken = getAccessToken();
-    const refreshToken = getRefreshToken();
 
-    if (accessToken && refreshToken) {
-      try {
-        const response = await axios.get<ApiResponse<IUser>>('/users/me');
-        if (response.data.success && response.data.data) {
-          setUser(response.data.data);
-          setIsAuthenticated(true);
-        } else {
-          clearAuthTokens();
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error("Failed to initialize auth or fetch user data:", error);
-        clearAuthTokens();
+    try {
+      const response = await axios.get<ApiResponse<IUser>>('/users/me');
+      if (response.data.success && response.data.data) {
+        setUser(response.data.data);
+        setIsAuthenticated(true);
+      } else {
         setUser(null);
         setIsAuthenticated(false);
       }
-    } else {
-      clearAuthTokens();
+    } catch (error) {
+      console.error("Failed to initialize auth or fetch user data:", error);
       setUser(null);
       setIsAuthenticated(false);
     }

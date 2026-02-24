@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function PlaylistDetails() {
   const { id } = useParams();
-  const { play } = usePlayer();
+  const { playTrack } = usePlayer();
   const { data: playlist, isLoading, error } = usePlaylistDetails(id);
 
   if (isLoading) {
@@ -78,7 +78,7 @@ export default function PlaylistDetails() {
       <div className="px-4 md:px-6 flex items-center gap-4">
         {tracks.length > 0 && (
           <button
-            onClick={() => play(tracks[0], tracks)}
+            onClick={() => playTrack(tracks[0], tracks)}
             className="h-12 w-12 rounded-full bg-primary flex items-center justify-center hover:scale-105 transition-transform shadow-lg"
           >
             <Play className="h-6 w-6 text-primary-foreground fill-current" />

@@ -15,9 +15,7 @@ export interface IAuthResponse {
     email: string;
     name?: string;
     avatar?: string;
-    role: Role; // Use the Role enum
+    role: Role;
     isActive: boolean;
   };
-  accessToken: string;
-  refreshToken: string;
 }

@@ -31,6 +31,4 @@ export const userSchema = z.object({
 // Schema for the full IAuthResponse
 export const authResponseSchema = z.object({
   user: userSchema,
-  accessToken: z.string(),
-  refreshToken: z.string(),
 });

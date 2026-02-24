@@ -1,5 +1,5 @@
 const User = require('../users/user.model');
-const { generateAccessToken, generateRefreshToken } = require('../../utils/jwt');
+const { generateAccessToken } = require('../../utils/jwt');
 const bcrypt = require('bcryptjs');
 
 const registerUser = async (userData) => {
@@ -16,25 +16,19 @@ const registerUser = async (userData) => {
 
   // Generate tokens
   const accessToken = generateAccessToken({ id: user._id, role: user.role });
-  const refreshToken = generateRefreshToken({ id: user._id, role: user.role });
-
-  // Hash and save refresh token
-  const hashedRefreshToken = await bcrypt.hash(refreshToken, 10); // Using 10 salt rounds
-  user.refreshToken = hashedRefreshToken;
-  await user.save();
 
   // Return user without password and tokens
   const userWithoutPassword = user.toObject();
   delete userWithoutPassword.password;
 
-  return { user: userWithoutPassword, accessToken, refreshToken };
+  return { user: userWithoutPassword, accessToken };
 };
 
 const loginUser = async (userData) => {
   const { email, password } = userData;
 
-  // Find user by email, include password and refreshToken
-  const user = await User.findOne({ email }).select('+password +refreshToken');
+  // Find user by email, include password
+  const user = await User.findOne({ email }).select('+password');
   if (!user) {
     throw new Error('Invalid credentials');
   }
@@ -47,18 +41,12 @@ const loginUser = async (userData) => {
 
   // Generate tokens
   const accessToken = generateAccessToken({ id: user._id, role: user.role });
-  const refreshToken = generateRefreshToken({ id: user._id, role: user.role });
-
-  // Hash and save new refresh token
-  const hashedRefreshToken = await bcrypt.hash(refreshToken, 10); // Using 10 salt rounds
-  user.refreshToken = hashedRefreshToken;
-  await user.save();
 
   // Return user without password and tokens
   const userWithoutPassword = user.toObject();
   delete userWithoutPassword.password;
 
-  return { user: userWithoutPassword, accessToken, refreshToken };
+  return { user: userWithoutPassword, accessToken };
 };
 
 const logoutUser = async (userId) => {
@@ -66,8 +54,6 @@ const logoutUser = async (userId) => {
   if (!user) {
     throw new Error('User not found');
   }
-  user.refreshToken = null; // Invalidate refresh token
-  await user.save();
   return { message: 'Logged out successfully' };
 };
 

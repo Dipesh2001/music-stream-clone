@@ -8,6 +8,7 @@ export interface User extends AuthUser {
   createdAt: string;
   updatedAt: string;
   isEmailVerified: boolean;
+  isActive: boolean;
   // etc.
 }
 

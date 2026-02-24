@@ -2,7 +2,6 @@
 import axios from '../lib/axios';
 import { ILoginPayload, IRegisterPayload, IAuthResponse } from '../types/auth.types';
 import { loginSchema, registerSchema, authResponseSchema } from '../schemas/auth.schema'; // Import authResponseSchema
-import { setAuthTokens, clearAuthTokens } from '../utils/auth';
 import { ApiResponse } from '../types/api.types';
 
 // Custom error class for API errors
@@ -33,7 +32,6 @@ const register = async (payload: IRegisterPayload): Promise<IAuthResponse> => {
       throw new ApiError('Invalid response format from server during registration.', 500);
     }
 
-    setAuthTokens(parsedResponse.data.accessToken as string, parsedResponse.data.refreshToken as string);
     return parsedResponse.data as IAuthResponse;
   } catch (error: any) {
     if (error instanceof ApiError) throw error;
@@ -58,7 +56,6 @@ const login = async (payload: ILoginPayload): Promise<IAuthResponse> => {
       throw new ApiError('Invalid response format from server during login.', 500);
     }
 
-    setAuthTokens(parsedResponse.data.accessToken as string, parsedResponse.data.refreshToken as string);
     return parsedResponse.data as IAuthResponse;
   } catch (error: any) {
     if (error instanceof ApiError) throw error;
@@ -68,8 +65,12 @@ const login = async (payload: ILoginPayload): Promise<IAuthResponse> => {
   }
 };
 
-const logout = (): void => {
-  clearAuthTokens();
+const logout = async (): Promise<void> => {
+  try {
+    await axios.post('/auth/logout');
+  } catch (err) {
+    console.error('Logout API failed:', err);
+  }
   window.location.href = '/login';
 };
 

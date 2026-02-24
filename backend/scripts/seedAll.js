@@ -7,6 +7,7 @@ const seedArtists = require('./seedArtists');
 const seedAlbums = require('./seedAlbums');
 const { seedTracks } = require('./seedTracks');
 const seedPlaylists = require('./seedPlaylists');
+const seedUsers = require('./seedUsers');
 
 const seedAll = async () => {
     try {
@@ -14,16 +15,27 @@ const seedAll = async () => {
 
         await connectDB();
 
-        console.log('1. Seeding Artists...');
+        console.log('Clearing database...');
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            const collection = collections[key];
+            await collection.deleteMany({});
+        }
+        console.log('Database cleared.');
+
+        console.log('1. Seeding Users...');
+        await seedUsers();
+
+        console.log('2. Seeding Artists...');
         const artists = await seedArtists();
 
-        console.log('2. Seeding Albums...');
+        console.log('3. Seeding Albums...');
         const albums = await seedAlbums(artists);
 
-        console.log('3. Seeding Tracks...');
+        console.log('4. Seeding Tracks...');
         const tracks = await seedTracks(albums);
 
-        console.log('4. Seeding Playlists...');
+        console.log('5. Seeding Playlists...');
         await seedPlaylists(tracks);
 
         console.log('--- Database Seeding Completed Successfully ---');

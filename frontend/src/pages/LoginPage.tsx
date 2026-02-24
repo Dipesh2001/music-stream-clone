@@ -4,7 +4,7 @@ import { useLoginUserMutation } from '../store/api/authApi';
 import type { LoginRequest } from '../types/auth.types';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/slices/authSlice';
-import { setTokens } from '../utils/auth';
+
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -24,17 +24,13 @@ const LoginPage: React.FC = () => {
       const response = await loginUser(loginPayload).unwrap();
 
       if (response.success && response.data) {
-        console.log('Login successful. Received accessToken:', response.data.accessToken);
+        console.log('Login successful.');
         dispatch(
           setCredentials({
             user: response.data.user,
-            accessToken: response.data.accessToken,
-            refreshToken: response.data.refreshToken,
           })
         );
         console.log('Credentials dispatched. isAuthenticated in Redux should now be true.');
-        setTokens(response.data.accessToken, response.data.refreshToken);
-        console.log('Tokens set in localStorage.');
         navigate('/dashboard'); // Redirect to dashboard on successful login
       } else {
         setErrorMessage(response.message || 'Login failed: Unknown error');

@@ -33,7 +33,36 @@ const updateMe = async (userId, updateData) => {
   return user;
 };
 
+const getAllUsers = async (filters = {}) => {
+  const query = {};
+  if (filters.role) query.role = filters.role;
+  if (filters.isActive !== undefined) query.isActive = filters.isActive;
+  if (filters.search) {
+    query.$or = [
+      { name: { $regex: filters.search, $options: 'i' } },
+      { email: { $regex: filters.search, $options: 'i' } }
+    ];
+  }
+
+  const users = await User.find(query).select('-password').sort({ createdAt: -1 });
+  return users;
+};
+
+const updateUserStatus = async (userId, isActive) => {
+  const user = await User.findByIdAndUpdate(userId, { isActive }, {
+    new: true,
+    runValidators: true,
+  }).select('-password');
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+  return user;
+};
+
 module.exports = {
   getMe,
   updateMe,
+  getAllUsers,
+  updateUserStatus,
 };

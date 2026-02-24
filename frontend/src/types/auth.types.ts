@@ -27,29 +27,10 @@ export interface RegisterRequest {
 
 export interface LoginResponseData {
   user: AuthUser;
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number; // e.g., in seconds
 }
 
 export interface LoginResponse {
   success: boolean;
   message?: string;
   data: LoginResponseData;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
-}
-
-export interface RefreshTokenResponseData {
-  accessToken: string;
-  refreshToken: string; // New refreshToken
-  expiresIn: number;
-}
-
-export interface RefreshTokenResponse {
-  success: boolean;
-  message?: string;
-  data: RefreshTokenResponseData;
 }

@@ -3,8 +3,6 @@ import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
 } from '../../types/auth.types';
 import type { BaseApiResponse } from '../../types/common.types';
 
@@ -26,14 +24,6 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Auth'],
     }),
-    refreshToken: builder.mutation<BaseApiResponse<RefreshTokenResponse['data']>, RefreshTokenRequest>({
-      query: (body) => ({
-        url: '/auth/refresh-token',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Auth'],
-    }),
     logoutUser: builder.mutation<BaseApiResponse<null>, void>({
       query: () => ({
         url: '/auth/logout',
@@ -44,4 +34,4 @@ export const authApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useRegisterUserMutation, useLoginUserMutation, useRefreshTokenMutation, useLogoutUserMutation } = authApi;
+export const { useRegisterUserMutation, useLoginUserMutation, useLogoutUserMutation } = authApi;
