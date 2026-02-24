@@ -16,6 +16,8 @@ export function usePlayer() {
     duration: context.duration,
     progress: context.progress,
     volume: context.volume,
+    isLoadingAudio: context.isLoadingAudio,
+    bufferProgress: context.bufferProgress,
 
     // Actions
     playTrack: (track: Track, queue?: Track[]) => context.playTrack(track, queue),

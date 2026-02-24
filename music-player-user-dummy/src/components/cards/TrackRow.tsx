@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { Heart, Play, Pause } from "lucide-react";
 import type { Track } from "@/types/track";
 import { usePlayer } from "@/hooks/usePlayer";
-import { useState } from "react";
+import { useLibrary } from "@/context/LibraryContext";
+import { TrackRowActions } from "./TrackRowActions";
 
 function formatDuration(seconds: number) {
   const m = Math.floor(seconds / 60);
@@ -14,12 +15,14 @@ interface TrackRowProps {
   track: Track;
   index?: number;
   trackList?: Track[];
+  playlistId?: string;
 }
 
-export function TrackRow({ track, index, trackList }: TrackRowProps) {
+export function TrackRow({ track, index, trackList, playlistId }: TrackRowProps) {
   const { playTrack, togglePlay, currentTrack, isPlaying } = usePlayer();
+  const { isTrackLiked, toggleLike } = useLibrary();
   const isCurrentTrack = currentTrack?._id === track._id;
-  const [liked, setLiked] = useState(track.isLiked);
+  const isLiked = isTrackLiked(track._id);
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -59,13 +62,17 @@ export function TrackRow({ track, index, trackList }: TrackRowProps) {
 
       <motion.button
         whileTap={{ scale: 1.4 }}
-        onClick={(e) => { e.stopPropagation(); setLiked(!liked); }}
+        onClick={(e) => { e.stopPropagation(); toggleLike(track._id); }}
         className="opacity-0 group-hover:opacity-100 transition-opacity p-1"
       >
-        <Heart className={`h-4 w-4 ${liked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+        <Heart className={`h-4 w-4 ${isLiked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
       </motion.button>
 
       <span className="text-xs text-muted-foreground w-10 text-right">{formatDuration(track.duration)}</span>
+
+      <div className="flex-shrink-0 w-8 flex items-center justify-center -mr-1">
+        <TrackRowActions track={track} playlistId={playlistId} />
+      </div>
     </motion.div>
   );
 }

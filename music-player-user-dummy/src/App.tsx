@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { LibraryProvider } from "@/context/LibraryContext";
 import { PlayerProvider } from "@/context/PlayerContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthLayout } from "@/components/layout/AuthLayout";
@@ -27,39 +28,41 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <PlayerProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            {/* TEMP: remove after auth verification */}
-            <AuthStatusBanner />
-            <Routes>
-              {/* Public */}
-              <Route path="/" element={<Landing />} />
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-              </Route>
+      <LibraryProvider>
+        <PlayerProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              {/* TEMP: remove after auth verification */}
+              <AuthStatusBanner />
+              <Routes>
+                {/* Public */}
+                <Route path="/" element={<Landing />} />
+                <Route element={<AuthLayout />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                </Route>
 
-              {/* Protected (with app layout) */}
-              <Route element={<AppLayout />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/library/liked" element={<LikedSongs />} />
-                <Route path="/playlist/:id" element={<PlaylistDetails />} />
-                <Route path="/album/:id" element={<AlbumDetails />} />
-                <Route path="/artist/:id" element={<ArtistDetails />} />
-              </Route>
+                {/* Protected (with app layout) */}
+                <Route element={<AppLayout />}>
+                  <Route path="/home" element={<Home />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/library" element={<Library />} />
+                  <Route path="/library/liked" element={<LikedSongs />} />
+                  <Route path="/playlist/:id" element={<PlaylistDetails />} />
+                  <Route path="/album/:id" element={<AlbumDetails />} />
+                  <Route path="/artist/:id" element={<ArtistDetails />} />
+                </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
 
-        </TooltipProvider>
-      </PlayerProvider>
+          </TooltipProvider>
+        </PlayerProvider>
+      </LibraryProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

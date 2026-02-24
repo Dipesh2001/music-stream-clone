@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { useTrendingTracks, useLatestAlbums, useFeaturedArtists, useMyPlaylists } from "@/hooks/useHomeData";
+import { useTrendingTracks, useLatestAlbums, useFeaturedArtists } from "@/hooks/useHomeData";
+import { useLibrary } from "@/context/LibraryContext";
 import { CardCarousel } from "@/components/cards/CardCarousel";
 import { AlbumCard } from "@/components/cards/AlbumCard";
 import { ArtistCard } from "@/components/cards/ArtistCard";
@@ -12,7 +13,7 @@ export default function Home() {
   const { data: tracks, isLoading: tracksLoading, error: tracksError } = useTrendingTracks();
   const { data: albums, isLoading: albumsLoading, error: albumsError } = useLatestAlbums();
   const { data: artists, isLoading: artistsLoading, error: artistsError } = useFeaturedArtists();
-  const { data: playlists, isLoading: playlistsLoading } = useMyPlaylists();
+  const { playlists, recentlyPlayed, isLoading: libraryLoading } = useLibrary();
 
   const isLoading = tracksLoading || albumsLoading || artistsLoading;
   const error = tracksError || albumsError || artistsError;
@@ -38,7 +39,7 @@ export default function Home() {
         <p className="text-muted-foreground text-sm mb-6">Pick up where you left off</p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {playlistsLoading ? (
+          {libraryLoading ? (
             Array(6).fill(0).map((_, i) => (
               <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))
@@ -119,6 +120,23 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {recentlyPlayed && recentlyPlayed.length > 0 && (
+        <section>
+          <h2 className="text-2xl font-bold mb-4 tracking-tight">Recently Played</h2>
+          <div className="space-y-1">
+            {recentlyPlayed.map((historyItem, i) => (
+              // Map historyItem.track back into TrackRow
+              <TrackRow
+                key={historyItem._id}
+                track={historyItem.track}
+                index={i}
+                trackList={recentlyPlayed.map(h => h.track)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </motion.div>
   );
 }

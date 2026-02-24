@@ -90,7 +90,7 @@ export default function PlaylistDetails() {
       <div className="px-4 md:px-6 space-y-1">
         {tracks.length > 0 ? (
           tracks.map((track, i) => (
-            <TrackRow key={track._id} track={track} index={i} trackList={tracks} />
+            <TrackRow key={track._id} track={track} index={i} trackList={tracks} playlistId={playlist._id} />
           ))
         ) : (
           <div className="text-center py-10 text-muted-foreground italic">

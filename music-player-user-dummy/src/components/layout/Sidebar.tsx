@@ -1,8 +1,9 @@
 import { Home, Search, Library, Plus, Music2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { APP_NAME } from "@/lib/constants";
-import { useMyPlaylists } from "@/hooks/useHomeData";
+import { useLibrary } from "@/context/LibraryContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CreatePlaylistDialog } from "./CreatePlaylistDialog";
 
 const mainNav = [
   { to: "/home", icon: Home, label: "Home" },
@@ -11,7 +12,7 @@ const mainNav = [
 ];
 
 export function Sidebar() {
-  const { data: playlists, isLoading } = useMyPlaylists();
+  const { playlists, isLoading } = useLibrary();
 
   return (
     <aside className="hidden md:flex flex-col w-60 bg-card/50 border-r border-border/50 h-screen sticky top-0 flex-shrink-0">
@@ -43,9 +44,7 @@ export function Sidebar() {
       <div className="mt-6 px-3 flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
         <div className="flex items-center justify-between mb-3 px-3">
           <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Your Playlists</span>
-          <button className="p-1 rounded hover:bg-secondary text-muted-foreground">
-            <Plus className="h-4 w-4" />
-          </button>
+          <CreatePlaylistDialog />
         </div>
         <div className="space-y-1">
           {isLoading ? (

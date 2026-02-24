@@ -15,4 +15,6 @@ export interface PlayerState {
     progress: number;
     duration: number;
     volume: number;
+    isLoadingAudio: boolean;
+    bufferProgress: number;
 }

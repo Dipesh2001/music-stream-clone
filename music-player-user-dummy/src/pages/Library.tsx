@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { Heart, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useMyPlaylists } from "@/hooks/useHomeData";
+import { useLibrary } from "@/context/LibraryContext";
 import { PlaylistCard } from "@/components/cards/PlaylistCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Library() {
   const navigate = useNavigate();
-  const { data: playlists, isLoading } = useMyPlaylists();
+  const { playlists, isLoading } = useLibrary();
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 md:p-6 space-y-6">

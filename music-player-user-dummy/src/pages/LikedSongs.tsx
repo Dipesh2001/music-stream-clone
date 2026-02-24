@@ -1,15 +1,15 @@
 import { motion } from "framer-motion";
 import { Heart, Play, Loader2 } from "lucide-react";
-import { useFavorites } from "@/hooks/useHomeData";
 import { TrackRow } from "@/components/cards/TrackRow";
 import { usePlayer } from "@/hooks/usePlayer";
+import { useLibrary } from "@/context/LibraryContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function LikedSongs() {
-  const { data: favorites, isLoading } = useFavorites();
+  const { favorites, isLoading } = useLibrary();
   const { playTrack } = usePlayer();
 
-  const likedTracks = favorites?.tracks || [];
+  const likedTracks = favorites.map(f => f.track).filter(Boolean);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4 md:p-6 space-y-6 pb-20">

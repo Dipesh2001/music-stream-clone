@@ -1,14 +1,14 @@
 import { useAuth } from "@/hooks/useAuth";
-import { getAccessToken } from "@/utils/auth";
+
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTrendingTracks, useLatestAlbums, useFeaturedArtists } from "@/hooks/useHomeData";
 import { usePlayer } from "@/hooks/usePlayer";
+import { useLibrary } from "@/context/LibraryContext";
 
-// TEMP: remove after player verification
+// TEMP: remove after library verification
 export function AuthStatusBanner() {
     const { isAuthenticated, user } = useAuth();
-    const [tokenPresent, setTokenPresent] = useState(false);
     const location = useLocation();
 
     // Data trace
@@ -16,18 +16,12 @@ export function AuthStatusBanner() {
     const { data: latestAlbums } = useLatestAlbums();
     const { data: featuredArtists } = useFeaturedArtists();
 
-    // Player debug
-    const { currentTrack, isPlaying, queue, currentIndex } = usePlayer();
+    const { currentTrack, isPlaying, queue, currentIndex, isFullscreen, shuffleEnabled, repeatMode, progress, duration, volume, isLoadingAudio } = usePlayer();
 
-    // Update live
-    useEffect(() => {
-        const checkToken = () => {
-            setTokenPresent(!!getAccessToken());
-        };
-        checkToken();
-        const interval = setInterval(checkToken, 1000);
-        return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    // Library debug
+    const { favorites, playlists, recentlyPlayed } = useLibrary();
+
+    const shortenUrl = (url?: string) => url ? url.substring(url.lastIndexOf("/") + 1) : "NONE";
 
     const isAppLayoutRendered = isAuthenticated;
 
@@ -50,6 +44,23 @@ export function AuthStatusBanner() {
                     <span>Idx: <span className="text-[#a855f7]">{currentIndex}</span></span>
                     <span>Play: <span className={isPlaying ? "text-green-400" : "text-red-400"}>{isPlaying ? "YES" : "NO"}</span></span>
                 </div>
+
+                <div className="flex gap-2">
+                    <span>FS: <span className={isFullscreen ? "text-green-400" : "text-red-400"}>{isFullscreen ? "YES" : "NO"}</span></span>
+                </div>
+
+                <div className="flex gap-2 border-r border-white/10 pr-3">
+                    <span>Favs: <span className="text-pink-400 font-bold">{favorites.length}</span></span>
+                    <span>Playlists: <span className="text-pink-400 font-bold">{playlists.length}</span></span>
+                    <span>Recent: <span className="text-pink-400 font-bold">{recentlyPlayed.length}</span></span>
+                </div>
+
+                <div className="flex gap-2 border-r border-white/10 pr-3">
+                    <span>Audio: <span className={isLoadingAudio ? "text-yellow-400" : isPlaying ? "text-green-400" : "text-white"}>{isLoadingAudio ? "LOAD" : isPlaying ? "PLAY" : "PAUSE"}</span></span>
+                    <span>Time: <span className="text-[#a855f7]">{Math.floor(progress)}s / {Math.floor(duration)}s</span></span>
+                    <span>Vol: <span className="text-[#a855f7]">{Math.round(volume * 100)}%</span></span>
+                    <span className="truncate max-w-[100px]">Src: <span className="text-cyan-400">{shortenUrl(currentTrack?.audioUrl)}</span></span>
+                </div>
             </div>
 
             <div className="flex gap-2 items-center">
@@ -59,9 +70,7 @@ export function AuthStatusBanner() {
                 <span className={isAuthenticated ? "text-green-400" : "text-red-400"}>
                     Auth: {isAuthenticated ? "YES" : "NO"}
                 </span>
-                <span className={tokenPresent ? "text-green-400" : "text-red-400"}>
-                    Token: {tokenPresent ? "YES" : "NO"}
-                </span>
+
                 <span className="hidden lg:inline text-white/50">{user?.email || "N/A"}</span>
             </div>
         </div>
